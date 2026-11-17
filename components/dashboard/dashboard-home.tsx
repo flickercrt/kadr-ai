@@ -7,6 +7,7 @@ import { BotCardLink } from "@/components/bot-card-link";
 import { useBotLinks } from "@/components/use-bot-links";
 import { botCardHref } from "@/lib/bot-links";
 import { CoursesSection } from "@/components/dashboard/courses-section";
+import { RenewalBanner } from "@/components/renewal-banner";
 import { useI18n } from "@/components/locale-provider";
 import { useMe } from "@/components/use-me";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ export function DashboardHome() {
       <div className="mx-auto max-w-6xl px-4 py-10">
         <h1 className="text-3xl font-semibold">{t.dash.title}</h1>
         <p className="mt-2 max-w-2xl text-muted">{t.dash.lead}</p>
+        <RenewalBanner />
         {failed ? <p className="mt-4 text-sm text-secondary">{t.common.error}</p> : null}
         {me?.mode === "demo" && !me.user ? (
           <p className="mt-4 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm">
