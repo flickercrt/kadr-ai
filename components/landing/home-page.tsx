@@ -11,6 +11,7 @@ import { Countdown } from "@/components/countdown";
 import { PriceOffer } from "@/components/price-offer";
 import { usePricing } from "@/components/use-pricing";
 import { FrameArt } from "@/components/frame-art";
+import { HomeVideos } from "@/components/landing/home-videos";
 import { Mark } from "@/components/logo";
 import { useI18n } from "@/components/locale-provider";
 import { buttonVariants } from "@/components/ui/button";
@@ -80,6 +81,8 @@ export function HomePage() {
           )}
         </div>
       </section>
+
+      <HomeVideos />
 
       <Section kicker={tx(landing.problem.kicker)} title={tx(landing.problem.title)} lead={tx(landing.problem.lead)}>
         <div className="grid gap-4 md:grid-cols-3">
