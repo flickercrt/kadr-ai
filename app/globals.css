@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+:root {
+  --brand-bg: #0e1116;
+  --brand-surface: #161b22;
+  --brand-primary: #00d4b4;
+  --brand-primary-text: #0e1116;
+  --brand-secondary: #ff6b4a;
+  --brand-text: #f5f7fa;
+  --brand-muted: #8b949e;
+  --brand-border: #2a313c;
+  --background: var(--brand-bg);
+  --foreground: var(--brand-text);
+}
+
+@theme inline {
+  --color-background: var(--brand-bg);
+  --color-foreground: var(--brand-text);
+  --color-surface: var(--brand-surface);
+  --color-primary: var(--brand-primary);
+  --color-primary-foreground: var(--brand-primary-text);
+  --color-secondary: var(--brand-secondary);
+  --color-muted: var(--brand-muted);
+  --color-border: var(--brand-border);
+  --font-sans: var(--font-arabic), var(--font-inter), sans-serif;
+  --radius-lg: 0.5rem;
+}
+
+html {
+  background: var(--brand-bg);
+  color: var(--brand-text);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100%;
+  overflow-x: hidden;
+  font-family: var(--font-arabic), var(--font-inter), sans-serif;
+  background:
+    radial-gradient(900px 420px at 100% -10%, color-mix(in srgb, var(--brand-primary) 16%, transparent), transparent 55%),
+    radial-gradient(700px 380px at -10% 20%, color-mix(in srgb, var(--brand-secondary) 12%, transparent), transparent 50%),
+    var(--brand-bg);
+}
+
+html[dir="ltr"] body {
+  font-family: var(--font-inter), var(--font-arabic), sans-serif;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--brand-primary) 35%, transparent);
+  color: var(--brand-text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--brand-border);
+  border-radius: 99px;
+}
+
+.glow-ring {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--brand-primary) 70%, transparent),
+    0 0 42px color-mix(in srgb, var(--brand-primary) 22%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
