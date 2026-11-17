@@ -16,6 +16,7 @@ const links = [
   { href: "/admin/watch", id: "watch" },
   { href: "/admin/faq", id: "faq" },
   { href: "/admin/contact", id: "contact" },
+  { href: "/admin/seo", id: "seo" },
 ] as const;
 
 export function AdminNav({ current }: { current: (typeof links)[number]["id"] }) {
@@ -32,6 +33,7 @@ export function AdminNav({ current }: { current: (typeof links)[number]["id"] })
     watch: t.watchAdmin.nav,
     faq: t.faq.nav,
     contact: t.contact.nav,
+    seo: t.seo.nav,
   };
   return (
     <nav className="mb-6 flex flex-wrap gap-2">

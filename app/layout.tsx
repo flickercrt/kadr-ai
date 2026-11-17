@@ -3,6 +3,7 @@ import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
 import { brand, brandStyle, localeStorageKey } from "@/config/site";
 import { LocaleProvider } from "@/components/locale-provider";
 import { MaintenanceBanner } from "@/components/maintenance-banner";
+import { readSeo, absoluteUrl } from "@/lib/seo";
 import "./globals.css";
 
 const inter = Inter({
@@ -18,16 +19,35 @@ const arabic = IBM_Plex_Sans_Arabic({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://127.0.0.1:43123"),
-  title: {
-    default: `${brand.nameAr} — ${brand.tagline.ar}`,
-    template: `%s · ${brand.nameAr}`,
-  },
-  description: brand.description.ar,
-  applicationName: brand.name,
-  icons: { icon: "/icon.svg" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = await readSeo();
+  const url = absoluteUrl("/");
+  return {
+    metadataBase: new URL(url),
+    title: {
+      default: seo.title,
+      template: `%s · ${brand.nameAr}`,
+    },
+    description: seo.description,
+    keywords: seo.keywords.split(",").map((item) => item.trim()).filter(Boolean),
+    applicationName: brand.name,
+    alternates: { canonical: url },
+    openGraph: {
+      title: seo.title,
+      description: seo.description,
+      url,
+      siteName: brand.nameAr,
+      locale: "ar_AR",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.title,
+      description: seo.description,
+    },
+    icons: { icon: "/icon.svg" },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: brand.colors.background,

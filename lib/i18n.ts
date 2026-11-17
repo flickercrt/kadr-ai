@@ -489,6 +489,18 @@ const ar = {
     confirmRemove: "تأكيد الحذف",
     schema: "نفّذ الملف supabase/migrations/20261117290000_contact_messages.sql في محرر SQL في Supabase قبل استقبال الرسائل.",
   },
+  seo: {
+    nav: "البحث",
+    title: "تهيئة البحث",
+    lead: "عنوان الموقع ووصفه والكلمات التي تظهر في نتائج البحث وبطاقات المشاركة.",
+    siteTitle: "عنوان الموقع",
+    description: "الوصف",
+    keywords: "الكلمات المفتاحية",
+    keywordsHint: "افصل الكلمات بفاصلة.",
+    save: "حفظ",
+    saved: "تم الحفظ",
+    schema: "نفّذ الملف supabase/migrations/20261117300000_seo_settings.sql في محرر SQL في Supabase قبل تعديل نص البحث. إلى أن يُنفَّذ يبقى النص الجاهز.",
+  },
 };
 
 const en: typeof ar = {
@@ -979,6 +991,18 @@ const en: typeof ar = {
     remove: "Delete",
     confirmRemove: "Confirm delete",
     schema: "Run supabase/migrations/20261117290000_contact_messages.sql in the Supabase SQL editor before receiving messages.",
+  },
+  seo: {
+    nav: "Search",
+    title: "Search settings",
+    lead: "The site title, description, and keywords used in search results and share cards.",
+    siteTitle: "Site title",
+    description: "Description",
+    keywords: "Keywords",
+    keywordsHint: "Separate words with commas.",
+    save: "Save",
+    saved: "Saved",
+    schema: "Run supabase/migrations/20261117300000_seo_settings.sql in the Supabase SQL editor before editing search text. Until then the built-in copy stays.",
   },
 };
 
