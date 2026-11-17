@@ -220,10 +220,17 @@ export function AdminPanel() {
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
             <Input className="max-w-sm" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.admin.search} />
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-11 rounded-lg border border-border bg-background px-3 text-sm">
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              aria-label={t.admin.status}
+              className="h-11 rounded-lg border border-border bg-background px-3 text-sm"
+            >
               <option value="all">{t.admin.filterStatus}</option>
-              <option value="active">{t.admin.activate}</option>
-              <option value="inactive">{t.dash.inactive}</option>
+              <option value="active">{t.account.active}</option>
+              <option value="inactive">{t.account.inactive}</option>
+              <option value="past_due">{t.account.pastDue}</option>
+              <option value="canceled">{t.account.canceled}</option>
             </select>
             <select value={courseFilter} onChange={(event) => setCourseFilter(event.target.value)} className="h-11 rounded-lg border border-border bg-background px-3 text-sm">
               <option value="all">{t.admin.filterCourse}</option>
