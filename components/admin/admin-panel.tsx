@@ -239,6 +239,9 @@ export function AdminPanel() {
               ))}
             </select>
           </div>
+          <a href="/api/admin/export" className="inline-flex h-11 items-center rounded-lg border border-border px-4 text-sm font-semibold">
+            {t.admin.export}
+          </a>
           {configured && !forbidden ? (
             <Button type="button" onClick={() => (showForm ? closeForm() : setShowForm(true))}>
               {showForm ? t.common.cancel : t.admin.add}
