@@ -72,6 +72,7 @@ function SiteHeader() {
     { href: "/gallery", label: t.nav.projects },
     { href: "/roadmap", label: t.nav.roadmap, badge: t.nav.new },
     { href: "/faq", label: t.nav.faq },
+    { href: "/contact", label: t.nav.contact },
   ];
 
   return (
@@ -167,6 +168,7 @@ function SiteFooter() {
             <li><Link href="/gallery">{t.nav.projects}</Link></li>
             <li><Link href="/roadmap">{t.nav.roadmap}</Link></li>
             <li><Link href="/faq">{t.nav.faq}</Link></li>
+            <li><Link href="/contact">{t.nav.contact}</Link></li>
             <li><Link href="/login">{t.nav.login}</Link></li>
           </ul>
         </div>
