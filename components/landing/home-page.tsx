@@ -6,7 +6,7 @@ import { useBotLinks } from "@/components/use-bot-links";
 import { botCardHref } from "@/lib/bot-links";
 import { bots } from "@/config/bots";
 import { landing, offer, testimonials } from "@/config/site";
-import { works } from "@/data/works";
+import { HomeGallery } from "@/components/landing/home-gallery";
 import { Countdown } from "@/components/countdown";
 import { PriceOffer } from "@/components/price-offer";
 import { usePricing } from "@/components/use-pricing";
@@ -129,22 +129,7 @@ export function HomePage() {
         </article>
       </Section>
 
-      <Section kicker={tx(landing.showcase.kicker)} title={tx(landing.showcase.title)} lead={tx(landing.showcase.lead)}>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {works.slice(0, 4).map((work) => (
-            <Link key={work.id} href="/gallery" className="group rounded-lg border border-border bg-surface p-3 transition hover:scale-[1.015]">
-              <FrameArt tone={work.tone} numeral={work.id.slice(-2)} kind={work.kind} />
-              <div className="mt-3 flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold">{tx(work.title)}</h3>
-                <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted">{t.common.sample}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-        <Link href="/gallery" className={cn(buttonVariants({ variant: "outline" }), "mt-6")}>
-          {tx(landing.showcase.cta)}
-        </Link>
-      </Section>
+      <HomeGallery />
 
       <Section id="bots" kicker={tx(landing.botsSection.kicker)} title={tx(landing.botsSection.title)} lead={tx(landing.botsSection.lead)}>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
