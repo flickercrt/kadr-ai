@@ -5,45 +5,73 @@ import { AppHeader } from "@/components/app-header";
 import { useI18n } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { useMe } from "@/components/use-me";
+import type { Locale } from "@/lib/i18n";
+import { isValidUsername, normalizeUsername, STUDENT_PASSWORD_MAX, STUDENT_PASSWORD_MIN } from "@/lib/username";
 
 type Student = {
   id: string;
   email: string | null;
+  username: string | null;
   name: string | null;
   status: string;
   provider: string | null;
   currentPeriodEnd: string | null;
 };
 
+type ApiError = { error?: { code?: string; ar?: string; en?: string } };
+
+function errorText(data: ApiError, locale: Locale, fallback: string) {
+  return (locale === "ar" ? data.error?.ar : data.error?.en) || fallback;
+}
+
+function identityOf(student: Student) {
+  return student.username || student.email || "—";
+}
+
 export function AdminPanel() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { me } = useMe();
   const [students, setStudents] = useState<Student[]>([]);
   const [configured, setConfigured] = useState(true);
+  const [forbidden, setForbidden] = useState(false);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [activateNow, setActivateNow] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [resetFor, setResetFor] = useState<Student | null>(null);
+  const [nextPassword, setNextPassword] = useState("");
+  const [resetError, setResetError] = useState("");
+  const [resetting, setResetting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     const response = await fetch("/api/admin/students");
+    const data = (await response.json()) as { configured?: boolean; students?: Student[] } & ApiError;
     if (response.status === 403) {
+      setForbidden(true);
       setError(t.admin.forbidden);
       setLoading(false);
       return;
     }
-    const data = (await response.json()) as { configured?: boolean; students?: Student[]; error?: { ar: string } };
+    setForbidden(false);
     if (!response.ok) {
-      setError(data.error?.ar || t.common.error);
+      setError(errorText(data, locale, t.common.error));
       setLoading(false);
       return;
     }
     setConfigured(Boolean(data.configured));
     setStudents(data.students ?? []);
     setLoading(false);
-  }, [t]);
+  }, [locale, t]);
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -52,22 +80,106 @@ export function AdminPanel() {
     return () => window.clearTimeout(id);
   }, [load]);
 
+  function closeForm() {
+    setShowForm(false);
+    setUsername("");
+    setPassword("");
+    setName("");
+    setActivateNow(true);
+    setFormError("");
+  }
+
+  function closeReset() {
+    setResetFor(null);
+    setNextPassword("");
+    setResetError("");
+  }
+
   async function setActive(userId: string, active: boolean) {
     setNotice("");
+    setError("");
     const response = await fetch("/api/admin/subscription", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, active }),
     });
     if (!response.ok) {
-      setError(t.common.error);
+      const data = (await response.json().catch(() => ({}))) as ApiError;
+      setError(errorText(data, locale, t.common.error));
       return;
     }
     setNotice(t.admin.saved);
     await load();
   }
 
-  const visible = students.filter((student) => (student.email || "").toLowerCase().includes(query.toLowerCase()));
+  async function createStudent(event: React.FormEvent) {
+    event.preventDefault();
+    setFormError("");
+    setNotice("");
+    setError("");
+    const normalized = normalizeUsername(username);
+    if (!isValidUsername(normalized)) {
+      setFormError(t.auth.usernameInvalid);
+      return;
+    }
+    if (password.length < STUDENT_PASSWORD_MIN || password.length > STUDENT_PASSWORD_MAX) {
+      setFormError(t.admin.passwordHint);
+      return;
+    }
+    setCreating(true);
+    const response = await fetch("/api/admin/students", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: normalized, password, name: name.trim(), activate: activateNow }),
+    });
+    const data = (await response.json().catch(() => ({}))) as ApiError;
+    setCreating(false);
+    if (!response.ok) {
+      const message = errorText(data, locale, t.common.error);
+      if (data.error?.code === "membership_failed") {
+        closeForm();
+        setError(message);
+        await load();
+        return;
+      }
+      setFormError(message);
+      return;
+    }
+    closeForm();
+    setNotice(t.admin.created);
+    await load();
+  }
+
+  async function resetPassword(event: React.FormEvent) {
+    event.preventDefault();
+    if (!resetFor) return;
+    setResetError("");
+    setNotice("");
+    if (nextPassword.length < STUDENT_PASSWORD_MIN || nextPassword.length > STUDENT_PASSWORD_MAX) {
+      setResetError(t.admin.passwordHint);
+      return;
+    }
+    setResetting(true);
+    const response = await fetch("/api/admin/students/password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: resetFor.id, password: nextPassword }),
+    });
+    const data = (await response.json().catch(() => ({}))) as ApiError;
+    setResetting(false);
+    if (!response.ok) {
+      setResetError(errorText(data, locale, t.common.error));
+      return;
+    }
+    closeReset();
+    setNotice(t.admin.resetDone);
+  }
+
+  const needle = query.trim().toLowerCase();
+  const visible = students.filter((student) => {
+    if (!needle) return true;
+    return `${student.username ?? ""} ${student.email ?? ""} ${student.name ?? ""}`.toLowerCase().includes(needle);
+  });
 
   return (
     <div className="min-h-dvh">
@@ -75,14 +187,74 @@ export function AdminPanel() {
       <div className="mx-auto max-w-5xl px-4 py-10">
         <h1 className="text-3xl font-semibold">{t.admin.title}</h1>
         <p className="mt-2 max-w-2xl text-sm leading-7 text-muted">{t.admin.lead}</p>
-        {error ? <p className="mt-4 text-sm text-secondary">{error}</p> : null}
-        {notice ? <p className="mt-4 text-sm text-primary">{notice}</p> : null}
+        {error ? <p className="mt-4 text-sm text-secondary" role="alert">{error}</p> : null}
+        {notice ? <p className="mt-4 text-sm text-primary" role="status">{notice}</p> : null}
         {!configured ? <p className="mt-4 rounded-lg border border-border bg-surface p-4 text-sm">{t.admin.unconfigured}</p> : null}
-        <Input className="mt-6 max-w-sm" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.admin.search} />
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <Input className="max-w-sm" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.admin.search} />
+          {configured && !forbidden ? (
+            <Button type="button" onClick={() => (showForm ? closeForm() : setShowForm(true))}>
+              {showForm ? t.common.cancel : t.admin.add}
+            </Button>
+          ) : null}
+        </div>
+        {showForm && configured && !forbidden ? (
+          <form onSubmit={(event) => void createStudent(event)} className="mt-4 max-w-xl space-y-3 rounded-lg border border-border bg-surface p-4">
+            <label className="block text-sm">
+              <span className="mb-1 block text-muted">{t.admin.username}</span>
+              <Input
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                dir="ltr"
+                className="text-left"
+                required
+                maxLength={32}
+              />
+              <span className="mt-1 block text-xs text-muted">{t.admin.usernameHint}</span>
+            </label>
+            <label className="block text-sm">
+              <span className="mb-1 block text-muted">{t.admin.password}</span>
+              <Input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="new-password"
+                dir="ltr"
+                className="text-left"
+                required
+                minLength={STUDENT_PASSWORD_MIN}
+              />
+              <span className="mt-1 block text-xs text-muted">{t.admin.passwordHint}</span>
+            </label>
+            <label className="block text-sm">
+              <span className="mb-1 block text-muted">
+                {t.admin.displayName} <span className="text-xs">({t.admin.optional})</span>
+              </span>
+              <Input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={80} />
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={activateNow}
+                onChange={(event) => setActivateNow(event.target.checked)}
+                className="size-4 accent-[#00D4B4]"
+              />
+              {t.admin.activateNow}
+            </label>
+            {formError ? <p className="text-sm text-secondary" role="alert">{formError}</p> : null}
+            <Button type="submit" disabled={creating}>
+              {creating ? t.common.loading : t.admin.create}
+            </Button>
+          </form>
+        ) : null}
         {loading ? <p className="mt-6 text-sm text-muted">{t.common.loading}</p> : null}
         {!loading && visible.length === 0 && configured ? <p className="mt-6 text-sm text-muted">{t.admin.empty}</p> : null}
         <div className="mt-4 overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full min-w-[760px] text-sm">
             <thead className="bg-surface text-muted">
               <tr>
                 <th className="p-3 text-start font-medium">{t.admin.email}</th>
@@ -95,20 +267,35 @@ export function AdminPanel() {
             <tbody>
               {visible.map((student) => (
                 <tr key={student.id} className="border-t border-border">
-                  <td className="p-3">{student.email}</td>
+                  <td className="p-3">
+                    <span dir="ltr">{identityOf(student)}</span>
+                  </td>
                   <td className="p-3">{student.name}</td>
                   <td className="p-3">{student.status}</td>
                   <td className="p-3">{student.provider || "—"}</td>
                   <td className="p-3">
-                    {student.status === "active" ? (
-                      <Button size="sm" variant="outline" onClick={() => void setActive(student.id, false)}>
-                        {t.admin.deactivate}
+                    <div className="flex flex-wrap gap-2">
+                      {student.status === "active" ? (
+                        <Button size="sm" variant="outline" onClick={() => void setActive(student.id, false)}>
+                          {t.admin.deactivate}
+                        </Button>
+                      ) : (
+                        <Button size="sm" onClick={() => void setActive(student.id, true)}>
+                          {t.admin.activate}
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setResetError("");
+                          setNextPassword("");
+                          setResetFor(student);
+                        }}
+                      >
+                        {t.admin.reset}
                       </Button>
-                    ) : (
-                      <Button size="sm" onClick={() => void setActive(student.id, true)}>
-                        {t.admin.activate}
-                      </Button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -116,6 +303,36 @@ export function AdminPanel() {
           </table>
         </div>
       </div>
+      <Modal open={resetFor !== null} onOpenChange={(open) => { if (!open) closeReset(); }} title={t.admin.resetTitle}>
+        <form onSubmit={(event) => void resetPassword(event)} className="space-y-3">
+          <p className="text-sm text-muted">{t.admin.resetLead}</p>
+          {resetFor ? <p className="text-sm" dir="ltr">{identityOf(resetFor)}</p> : null}
+          <label className="block text-sm">
+            <span className="mb-1 block text-muted">{t.admin.password}</span>
+            <Input
+              type="password"
+              value={nextPassword}
+              onChange={(event) => setNextPassword(event.target.value)}
+              autoComplete="new-password"
+              autoFocus
+              dir="ltr"
+              className="text-left"
+              required
+              minLength={STUDENT_PASSWORD_MIN}
+            />
+            <span className="mt-1 block text-xs text-muted">{t.admin.passwordHint}</span>
+          </label>
+          {resetError ? <p className="text-sm text-secondary" role="alert">{resetError}</p> : null}
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" disabled={resetting}>
+              {resetting ? t.common.loading : t.admin.resetSave}
+            </Button>
+            <Button type="button" variant="outline" onClick={closeReset}>
+              {t.common.cancel}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

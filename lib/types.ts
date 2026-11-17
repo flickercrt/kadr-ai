@@ -3,7 +3,7 @@ export type SubscriptionStatus = "active" | "inactive" | "past_due" | "canceled"
 export type MeResponse = {
   mode: "demo" | "live";
   configured: boolean;
-  user: { id: string; email: string; name: string } | null;
+  user: { id: string; email: string; name: string; username: string | null } | null;
   subscription: {
     status: SubscriptionStatus;
     active: boolean;

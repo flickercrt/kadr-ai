@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { joinFeed, landing, whatsappHref } from "@/config/site";
+import { joinFeed, landing, offer, whatsappHref } from "@/config/site";
 import { Countdown } from "@/components/countdown";
 import { Logo } from "@/components/logo";
 import { useI18n } from "@/components/locale-provider";
@@ -171,6 +171,9 @@ function SiteFooter() {
           >
             {t.footer.whatsapp}
           </a>
+          <p className="mt-3 text-sm text-muted" dir="ltr">
+            {offer.whatsappDisplay}
+          </p>
         </div>
       </div>
       <div className="border-t border-border px-4 py-4 text-center text-xs text-muted">

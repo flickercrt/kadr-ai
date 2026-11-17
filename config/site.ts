@@ -48,8 +48,6 @@ export const localeStorageKey = "kadr-locale";
 /**
  * Commerce. The strikethrough price, the live price, the countdown, and
  * WhatsApp all live here — not in components.
- *
- * PLACEHOLDER WhatsApp number: replace before launch.
  */
 export const offer = {
   discountPercent: 60,
@@ -61,8 +59,13 @@ export const offer = {
   currencySymbol: "$",
   /** ISO timestamp. The countdown reaches zero at this moment. */
   countdownEndsAt: "2026-12-31T21:00:00.000Z",
-  /** Digits only, country code included, no plus sign. */
-  whatsapp: "970599000000",
+  /**
+   * wa.me digits only: country code 972, no plus, no leading zero.
+   * Palestinian mobile 0569737472.
+   */
+  whatsapp: "972569737472",
+  /** Local format shown in the interface. */
+  whatsappDisplay: "0569737472",
   whatsappMessage: {
     ar: "مرحبا، أريد الاشتراك في عضوية كادر AI",
     en: "Hello, I would like to join Kadr AI",

@@ -472,8 +472,9 @@ function Paywall({ me }: { me: MeResponse | null }) {
         <Button type="button" onClick={() => void checkout()}>
           {me?.user ? t.chat.subscribe : t.chat.loginToSubscribe}
         </Button>
-        <a href={whatsappHref(locale)} className="inline-flex h-11 items-center rounded-lg border border-border px-4 text-sm" target="_blank" rel="noreferrer">
+        <a href={whatsappHref(locale)} className="inline-flex h-11 items-center gap-2 rounded-lg border border-border px-4 text-sm" target="_blank" rel="noreferrer">
           {t.common.whatsapp}
+          <span dir="ltr">{offer.whatsappDisplay}</span>
         </a>
       </div>
     </div>

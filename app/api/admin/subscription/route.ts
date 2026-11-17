@@ -1,8 +1,6 @@
 import { z } from "zod";
-import { isAdminEmail } from "@/lib/env";
+import { requireAdminCaller } from "@/lib/admin-auth";
 import { jsonError } from "@/lib/http";
-import { createAdminSupabase } from "@/lib/supabase/admin";
-import { createServerSupabase } from "@/lib/supabase/server";
 
 
 const bodySchema = z.object({
@@ -11,14 +9,13 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const supabase = await createServerSupabase();
-  const user = supabase ? (await supabase.auth.getUser()).data.user : null;
-  if (!user || !isAdminEmail(user.email)) return jsonError(403, "forbidden");
+  const gate = await requireAdminCaller();
+  if (gate.denied) return gate.denied;
+  if (!gate.admin) return jsonError(503, "config");
+  const admin = gate.admin;
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return jsonError(400, "invalid");
-  const admin = createAdminSupabase();
-  if (!admin) return jsonError(503, "config");
 
   const { error } = await admin.from("subscriptions").upsert({
     user_id: parsed.data.userId,

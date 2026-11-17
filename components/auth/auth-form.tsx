@@ -5,6 +5,7 @@ import { useState } from "react";
 import { isDemoMode, isSupabaseConfigured } from "@/lib/env";
 import { safeNextPath } from "@/lib/utils";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
+import { isReservedStudentEmail, isValidUsername, loginEmailFromIdentifier, normalizeUsername, STUDENT_PASSWORD_MIN } from "@/lib/username";
 import { Logo } from "@/components/logo";
 import { useI18n } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
@@ -25,12 +26,21 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     event.preventDefault();
     setError("");
     setInfo("");
-    if (password.length < 8) {
-      setError(t.auth.passwordShort);
+    const minPassword = mode === "login" ? STUDENT_PASSWORD_MIN : 8;
+    if (password.length < minPassword) {
+      setError(mode === "login" ? t.auth.passwordShortLogin : t.auth.passwordShort);
       return;
     }
     if (mode === "signup" && name.trim().length < 2) {
       setError(t.auth.nameShort);
+      return;
+    }
+    if (mode === "signup" && isReservedStudentEmail(email)) {
+      setError(t.auth.reservedEmail);
+      return;
+    }
+    if (mode === "login" && !email.trim().includes("@") && !isValidUsername(normalizeUsername(email))) {
+      setError(t.auth.usernameInvalid);
       return;
     }
     const supabase = createBrowserSupabase();
@@ -61,7 +71,10 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       window.location.href = next;
       return;
     }
-    const { error: signError } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: signError } = await supabase.auth.signInWithPassword({
+      email: loginEmailFromIdentifier(email),
+      password,
+    });
     setPending(false);
     if (signError) {
       setError(signError.message);
@@ -99,8 +112,20 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </label>
         ) : null}
         <label className="block text-sm">
-          <span className="mb-1 block text-muted">{t.auth.email}</span>
-          <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required />
+          <span className="mb-1 block text-muted">{mode === "login" ? t.auth.identifier : t.auth.email}</span>
+          <Input
+            type={mode === "login" ? "text" : "email"}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            autoComplete={mode === "login" ? "username" : "email"}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            dir="ltr"
+            className="text-left"
+            placeholder={mode === "login" ? t.auth.identifierPlaceholder : undefined}
+            required
+          />
         </label>
         <label className="block text-sm">
           <span className="mb-1 block text-muted">{t.auth.password}</span>
@@ -109,8 +134,10 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoComplete={mode === "login" ? "current-password" : "new-password"}
+            dir="ltr"
+            className="text-left"
             required
-            minLength={8}
+            minLength={mode === "login" ? STUDENT_PASSWORD_MIN : 8}
           />
         </label>
         {error ? <p className="text-sm text-secondary">{error}</p> : null}

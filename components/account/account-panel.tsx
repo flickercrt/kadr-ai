@@ -76,7 +76,9 @@ export function AccountPanel() {
         ) : null}
         {me?.user ? (
           <div className="mt-6 rounded-lg border border-border bg-surface p-5">
-            <p className="text-sm text-muted">{me.user.email}</p>
+            <p className="text-sm text-muted">
+              <span dir="ltr">{me.user.username || me.user.email}</span>
+            </p>
             <h2 className="mt-4 text-sm text-muted">{t.account.status}</h2>
             <p className="text-2xl font-semibold">{me.subscription.demoBypass ? t.account.demo : statusLabel}</p>
             <p className="mt-2 text-sm text-muted">
@@ -109,6 +111,9 @@ export function AccountPanel() {
             <p className="mt-4 text-sm leading-7 text-muted">{t.account.manual}</p>
             <a href={whatsappHref(locale)} className="mt-2 inline-block text-sm text-primary" target="_blank" rel="noreferrer">
               {t.common.whatsapp}
+              <span className="ms-2" dir="ltr">
+                {offer.whatsappDisplay}
+              </span>
             </a>
             {me.isAdmin ? (
               <p className="mt-4">

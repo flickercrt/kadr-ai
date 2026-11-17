@@ -6,6 +6,7 @@ import { createAdminSupabase } from "@/lib/supabase/admin";
 import { asStatus, isSubscriptionActive } from "@/lib/subscription";
 import { currentPeriod } from "@/lib/http";
 import type { MeResponse } from "@/lib/types";
+import { displayIdentity } from "@/lib/username";
 
 const emptySubscription: MeResponse["subscription"] = {
   status: "inactive",
@@ -67,12 +68,15 @@ export async function getMe(): Promise<MeResponse> {
       : null,
   );
 
+  const identity = displayIdentity(profile?.email || user.email || "");
+
   return {
     mode: demo ? "demo" : "live",
     configured: true,
     user: {
       id: user.id,
-      email: profile?.email || user.email || "",
+      email: identity.email ?? "",
+      username: identity.username,
       name: profile?.full_name || (user.user_metadata?.full_name as string) || "",
     },
     subscription: {
