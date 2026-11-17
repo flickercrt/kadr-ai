@@ -43,7 +43,7 @@ export async function GET() {
     students: students ?? 0,
     active: activeCount,
     newThisWeek: fresh ?? 0,
-    lessonsCompleted: lessons ?? 0,
+    lessonsCompleted: lessons,
     revenueEstimate: Math.round(activeCount * pricing.salePrice),
     currencySymbol: pricing.currencySymbol,
   });

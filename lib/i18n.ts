@@ -292,6 +292,7 @@ const ar = {
     active: "عضويات فعّالة",
     week: "جدد هذا الأسبوع",
     lessons: "دروس مكتملة",
+    lessonsMissing: "يظهر عند توفر جدول التقدم",
     revenue: "تقدير الإيراد",
   },
   notices: {
@@ -628,6 +629,7 @@ const en: typeof ar = {
     active: "Active memberships",
     week: "New this week",
     lessons: "Lessons completed",
+    lessonsMissing: "Shown once the progress table exists",
     revenue: "Revenue estimate",
   },
   notices: {
