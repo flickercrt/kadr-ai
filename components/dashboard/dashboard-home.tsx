@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { bots } from "@/config/bots";
 import { AppHeader } from "@/components/app-header";
+import { CoursesSection } from "@/components/dashboard/courses-section";
 import { useI18n } from "@/components/locale-provider";
 import { useMe } from "@/components/use-me";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,7 @@ export function DashboardHome() {
         ) : (
           <p className="mt-4 text-sm text-muted">{t.common.loading}</p>
         )}
+        <CoursesSection />
         <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {bots.map((bot) => {
             const inner = (

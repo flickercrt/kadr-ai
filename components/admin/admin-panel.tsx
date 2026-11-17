@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { AdminNav } from "@/components/admin/admin-nav";
 import { AppHeader } from "@/components/app-header";
 import { useI18n } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
@@ -185,6 +186,7 @@ export function AdminPanel() {
     <div className="min-h-dvh">
       <AppHeader me={me} />
       <div className="mx-auto max-w-5xl px-4 py-10">
+        <AdminNav current="members" />
         <h1 className="text-3xl font-semibold">{t.admin.title}</h1>
         <p className="mt-2 max-w-2xl text-sm leading-7 text-muted">{t.admin.lead}</p>
         {error ? <p className="mt-4 text-sm text-secondary" role="alert">{error}</p> : null}
