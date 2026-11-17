@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Avatar } from "@/components/avatar";
 import { Logo } from "@/components/logo";
 import { useI18n } from "@/components/locale-provider";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
@@ -34,7 +35,8 @@ export function AppHeader({ me }: { me: MeResponse | null }) {
             {me.usage.used}/{me.usage.limit}
           </span>
         ) : null}
-        <Link href="/account" className="text-muted hover:text-foreground">
+        <Link href="/account" className="inline-flex items-center gap-2 text-muted hover:text-foreground">
+          {me?.user ? <Avatar name={me.user.name} src={me.user.avatar} size={28} /> : null}
           {t.nav.account}
         </Link>
         <button

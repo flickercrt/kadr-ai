@@ -7,13 +7,21 @@ import { PriceOffer } from "@/components/price-offer";
 import { usePricing } from "@/components/use-pricing";
 import { AppHeader } from "@/components/app-header";
 import { useI18n } from "@/components/locale-provider";
+import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useMe } from "@/components/use-me";
+import { cleanAvatarUrl, cleanDisplayName, fileToAvatar } from "@/lib/profile";
 
 export function AccountPanel() {
   const { t, locale } = useI18n();
   const pricing = usePricing();
-  const { me, failed } = useMe();
+  const { me, failed, reload } = useMe();
+  const [name, setName] = useState("");
+  const [avatar, setAvatar] = useState("");
+  const [profileError, setProfileError] = useState("");
+  const [profileNotice, setProfileNotice] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
   const [banner, setBanner] = useState<"success" | "cancel" | null>(null);
   const [error, setError] = useState("");
   const [pending, setPending] = useState<"checkout" | "portal" | null>(null);
@@ -22,9 +30,13 @@ export function AccountPanel() {
     const id = window.setTimeout(() => {
       const value = new URLSearchParams(window.location.search).get("checkout");
       if (value === "success" || value === "cancel") setBanner(value);
+      if (me?.user) {
+        setName(me.user.name);
+        setAvatar(me.user.avatar ?? "");
+      }
     }, 0);
     return () => window.clearTimeout(id);
-  }, []);
+  }, [me?.user]);
 
   async function checkout() {
     setPending("checkout");
@@ -79,9 +91,69 @@ export function AccountPanel() {
         ) : null}
         {me?.user ? (
           <div className="mt-6 rounded-lg border border-border bg-surface p-5">
-            <p className="text-sm text-muted">
-              <span dir="ltr">{me.user.username || me.user.email}</span>
-            </p>
+            <div className="flex items-center gap-3">
+              <Avatar name={name || me.user.name} src={avatar || me.user.avatar} size={56} />
+              <p className="text-sm text-muted">
+                <span dir="ltr">{me.user.username || me.user.email}</span>
+              </p>
+            </div>
+            <form
+              className="mt-4 space-y-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void (async () => {
+                  if (cleanDisplayName(name) === null || cleanAvatarUrl(avatar) === null) {
+                    setProfileError(t.account.profileInvalid);
+                    return;
+                  }
+                  setSavingProfile(true);
+                  setProfileError("");
+                  setProfileNotice("");
+                  const response = await fetch("/api/me/profile", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, avatarUrl: avatar }),
+                  });
+                  const data = (await response.json().catch(() => ({}))) as { error?: { ar?: string; en?: string; code?: string } };
+                  setSavingProfile(false);
+                  if (!response.ok) {
+                    setProfileError((locale === "ar" ? data.error?.ar : data.error?.en) || (data.error?.code === "config" ? t.account.profileSchema : t.account.profileInvalid));
+                    return;
+                  }
+                  setProfileNotice(t.account.profileSaved);
+                  await reload();
+                })();
+              }}
+            >
+              <label className="block text-sm">
+                <span className="mb-1 block text-muted">{t.account.profileName}</span>
+                <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={80} />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block text-muted">{t.account.profilePhoto}</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="block text-xs text-muted"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    void fileToAvatar(file).then((value) => {
+                      if (value) setAvatar(value);
+                      else setProfileError(t.account.profileInvalid);
+                    });
+                  }}
+                />
+                <span className="mt-1 block text-xs text-muted">{t.account.profilePhotoHint}</span>
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block text-muted">{t.account.profileUrl}</span>
+                <Input value={avatar.startsWith("data:") ? "" : avatar} onChange={(event) => setAvatar(event.target.value)} dir="ltr" className="text-left" placeholder="https://" />
+              </label>
+              {profileError ? <p className="text-sm text-secondary" role="alert">{profileError}</p> : null}
+              {profileNotice ? <p className="text-sm text-primary" role="status">{profileNotice}</p> : null}
+              <Button type="submit" disabled={savingProfile}>{savingProfile ? t.common.loading : t.account.profileSave}</Button>
+            </form>
             <h2 className="mt-4 text-sm text-muted">{t.account.status}</h2>
             <p className="text-2xl font-semibold">{me.subscription.demoBypass ? t.account.demo : statusLabel}</p>
             <p className="mt-2 text-sm text-muted">

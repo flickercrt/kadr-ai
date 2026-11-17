@@ -50,8 +50,11 @@ export async function getMe(): Promise<MeResponse> {
   }
 
   const admin = createAdminSupabase() ?? supabase;
-  const [{ data: profile }, { data: subscription }, { data: usage }] = await Promise.all([
-    admin.from("profiles").select("full_name, email").eq("id", user.id).maybeSingle(),
+  const profileQuery = await admin.from("profiles").select("full_name, email, avatar_url").eq("id", user.id).maybeSingle();
+  const profile = profileQuery.error && /avatar_url/.test(profileQuery.error.message)
+    ? (await admin.from("profiles").select("full_name, email").eq("id", user.id).maybeSingle()).data
+    : profileQuery.data;
+  const [{ data: subscription }, { data: usage }] = await Promise.all([
     admin.from("subscriptions").select("status, provider, current_period_end").eq("user_id", user.id).maybeSingle(),
     admin
       .from("usage_monthly")
@@ -78,6 +81,7 @@ export async function getMe(): Promise<MeResponse> {
       email: identity.email ?? "",
       username: identity.username,
       name: profile?.full_name || (user.user_metadata?.full_name as string) || "",
+      avatar: (profile as { avatar_url?: string | null } | null)?.avatar_url || null,
     },
     subscription: {
       status: active ? "active" : status,
