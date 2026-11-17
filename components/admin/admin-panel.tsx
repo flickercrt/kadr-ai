@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { useMe } from "@/components/use-me";
 import type { Locale } from "@/lib/i18n";
-import { cleanAvatarUrl, cleanDisplayName, fileToAvatar } from "@/lib/profile";
+import { cleanAvatarUrl, cleanDisplayName } from "@/lib/profile";
 import { isValidUsername, normalizeUsername, STUDENT_PASSWORD_MAX, STUDENT_PASSWORD_MIN } from "@/lib/username";
 
 type Student = {
@@ -433,11 +433,19 @@ export function AdminPanel() {
               className="block text-xs text-muted"
               onChange={(event) => {
                 const file = event.target.files?.[0];
-                if (!file) return;
-                void fileToAvatar(file).then((value) => {
-                  if (value) setProfileAvatar(value);
-                  else setProfileError(t.account.profileInvalid);
-                });
+                if (!file || !profileFor) return;
+                void (async () => {
+                  const body = new FormData();
+                  body.set("file", file);
+                  body.set("userId", profileFor.id);
+                  const response = await fetch("/api/admin/students/avatar", { method: "POST", body });
+                  const data = (await response.json().catch(() => ({}))) as { avatarUrl?: string; error?: { code?: string } };
+                  if (!response.ok || !data.avatarUrl) {
+                    setProfileError(data.error?.code === "config" ? t.account.profileSchema : t.account.profileInvalid);
+                    return;
+                  }
+                  setProfileAvatar(data.avatarUrl);
+                })();
               }}
             />
           </label>
