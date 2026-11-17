@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { offer, whatsappHref } from "@/config/site";
 import { PriceOffer } from "@/components/price-offer";
+import { RenewalBanner } from "@/components/renewal-banner";
 import { usePricing } from "@/components/use-pricing";
 import { AppHeader } from "@/components/app-header";
 import { useI18n } from "@/components/locale-provider";
@@ -79,6 +80,7 @@ export function AccountPanel() {
       <AppHeader me={me} />
       <div className="mx-auto max-w-2xl px-4 py-10">
         <h1 className="text-3xl font-semibold">{t.account.title}</h1>
+        <RenewalBanner />
         {failed ? <p className="mt-4 text-sm text-secondary">{t.common.error}</p> : null}
         {banner === "success" ? <p className="mt-4 rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm">{t.account.success}</p> : null}
         {banner === "cancel" ? <p className="mt-4 rounded-lg border border-secondary/40 bg-secondary/10 p-3 text-sm">{t.account.cancel}</p> : null}
