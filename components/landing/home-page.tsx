@@ -5,8 +5,9 @@ import { BotCardLink } from "@/components/bot-card-link";
 import { useBotLinks } from "@/components/use-bot-links";
 import { botCardHref } from "@/lib/bot-links";
 import { bots } from "@/config/bots";
-import { landing, offer, testimonials } from "@/config/site";
+import { landing, testimonials } from "@/config/site";
 import { HomeGallery } from "@/components/landing/home-gallery";
+import { WatchSection } from "@/components/landing/watch-section";
 import { Countdown } from "@/components/countdown";
 import { PriceOffer } from "@/components/price-offer";
 import { usePricing } from "@/components/use-pricing";
@@ -56,31 +57,7 @@ export function HomePage() {
         <HeroFrame />
       </section>
 
-      <section id="watch" className="mx-auto max-w-6xl px-4 py-12">
-        <p className="text-sm font-semibold text-secondary">{tx(landing.watch.kicker)}</p>
-        <h2 className="mt-2 text-3xl font-semibold md:text-4xl">{tx(landing.watch.title)}</h2>
-        <p className="mt-3 max-w-2xl text-muted">{tx(landing.watch.lead)}</p>
-        <div className="mt-6 overflow-hidden rounded-lg border border-border bg-surface">
-          {offer.introYoutubeId ? (
-            <div className="aspect-video">
-              <iframe
-                className="h-full w-full"
-                src={`https://www.youtube-nocookie.com/embed/${offer.introYoutubeId}`}
-                title={tx(landing.watch.title)}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          ) : (
-            <div className="relative aspect-video">
-              <FrameArt tone="night" numeral="01" kind="video" className="h-full rounded-none" />
-              <p className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 text-sm text-white/80">
-                {tx(landing.watch.empty)}
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
+      <WatchSection />
 
       <HomeVideos />
 
