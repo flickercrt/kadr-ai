@@ -11,7 +11,7 @@ import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMe } from "@/components/use-me";
-import { cleanAvatarUrl, cleanDisplayName, fileToAvatar } from "@/lib/profile";
+import { cleanAvatarUrl, cleanDisplayName } from "@/lib/profile";
 
 export function AccountPanel() {
   const { t, locale } = useI18n();
@@ -138,10 +138,20 @@ export function AccountPanel() {
                   onChange={(event) => {
                     const file = event.target.files?.[0];
                     if (!file) return;
-                    void fileToAvatar(file).then((value) => {
-                      if (value) setAvatar(value);
-                      else setProfileError(t.account.profileInvalid);
-                    });
+                    void (async () => {
+                      setProfileError("");
+                      const body = new FormData();
+                      body.set("file", file);
+                      const response = await fetch("/api/me/avatar", { method: "POST", body });
+                      const data = (await response.json().catch(() => ({}))) as { avatarUrl?: string; error?: { ar?: string; en?: string; code?: string } };
+                      if (!response.ok || !data.avatarUrl) {
+                        setProfileError(data.error?.code === "config" ? t.account.profileSchema : (locale === "ar" ? data.error?.ar : data.error?.en) || t.account.profileInvalid);
+                        return;
+                      }
+                      setAvatar(data.avatarUrl);
+                      setProfileNotice(t.account.profileSaved);
+                      await reload();
+                    })();
                   }}
                 />
                 <span className="mt-1 block text-xs text-muted">{t.account.profilePhotoHint}</span>

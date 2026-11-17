@@ -148,7 +148,7 @@ const ar = {
     profileSave: "حفظ الملف",
     profileSaved: "تم حفظ الملف",
     profileInvalid: "تحقق من الاسم والصورة.",
-    profileSchema: "نفّذ supabase/migrations/20261117170000_profile_avatar.sql في محرر SQL لحفظ الصورة.",
+    profileSchema: "نفّذ supabase/migrations/20261117220000_avatar_bucket.sql في محرر SQL لإنشاء مخزن الصور، و20261117170000_profile_avatar.sql لعمود الصورة.",
   },
   admin: {
     title: "إدارة العضويات",
@@ -439,7 +439,7 @@ const en: typeof ar = {
     profileSave: "Save profile",
     profileSaved: "Profile saved",
     profileInvalid: "Check the name and the photo.",
-    profileSchema: "Run supabase/migrations/20261117170000_profile_avatar.sql in the SQL editor to store the photo.",
+    profileSchema: "Run supabase/migrations/20261117220000_avatar_bucket.sql in the SQL editor to create the photo bucket, and 20261117170000_profile_avatar.sql for the photo column.",
   },
   admin: {
     title: "Membership admin",
