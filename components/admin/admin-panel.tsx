@@ -5,6 +5,7 @@ import { AdminNav } from "@/components/admin/admin-nav";
 import { Avatar } from "@/components/avatar";
 import { ProgressPanel } from "@/components/admin/progress-panel";
 import { SignupNotices } from "@/components/admin/signup-notices";
+import { StatsStrip } from "@/components/admin/stats-strip";
 import { AppHeader } from "@/components/app-header";
 import { useI18n } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
@@ -201,6 +202,7 @@ export function AdminPanel() {
         <AdminNav current="members" />
         <h1 className="text-3xl font-semibold">{t.admin.title}</h1>
         <p className="mt-2 max-w-2xl text-sm leading-7 text-muted">{t.admin.lead}</p>
+        <StatsStrip />
         {error ? <p className="mt-4 text-sm text-secondary" role="alert">{error}</p> : null}
         {notice ? <p className="mt-4 text-sm text-primary" role="status">{notice}</p> : null}
         {!configured ? <p className="mt-4 rounded-lg border border-border bg-surface p-4 text-sm">{t.admin.unconfigured}</p> : null}

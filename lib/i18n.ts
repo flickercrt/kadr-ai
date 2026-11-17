@@ -254,6 +254,14 @@ const ar = {
     completed: "مكتمل",
     mark: "تعليم كمكتمل",
   },
+  stats: {
+    title: "نظرة سريعة",
+    students: "الطلاب",
+    active: "عضويات فعّالة",
+    week: "جدد هذا الأسبوع",
+    lessons: "دروس مكتملة",
+    revenue: "تقدير الإيراد",
+  },
   notices: {
     title: "طلاب جدد",
     lead: "يظهر هنا كل حساب يُنشأ، من التسجيل أو من إضافة طالب.",
@@ -549,6 +557,14 @@ const en: typeof ar = {
     percent: "Percent",
     completed: "Complete",
     mark: "Mark complete",
+  },
+  stats: {
+    title: "At a glance",
+    students: "Students",
+    active: "Active memberships",
+    week: "New this week",
+    lessons: "Lessons completed",
+    revenue: "Revenue estimate",
   },
   notices: {
     title: "New students",
