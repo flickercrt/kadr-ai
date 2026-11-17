@@ -5,6 +5,7 @@ import { AdminNav } from "@/components/admin/admin-nav";
 import { Avatar } from "@/components/avatar";
 import { ProgressPanel } from "@/components/admin/progress-panel";
 import { SignupNotices } from "@/components/admin/signup-notices";
+import { RenewalAdmin } from "@/components/admin/renewal-admin";
 import { StatsStrip } from "@/components/admin/stats-strip";
 import { AppHeader } from "@/components/app-header";
 import { useI18n } from "@/components/locale-provider";
@@ -415,6 +416,7 @@ export function AdminPanel() {
             </tbody>
           </table>
         </div>
+        <RenewalAdmin />
         <SignupNotices />
         <ProgressPanel />
       </div>
