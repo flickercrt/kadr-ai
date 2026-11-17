@@ -261,6 +261,15 @@ const ar = {
     read: "تعليم الكل كمقروء",
     schema: "نفّذ الملف supabase/migrations/20261117190000_signup_notifications.sql في محرر SQL لتفعيل إشعارات الطلاب الجدد.",
   },
+  botLinks: {
+    nav: "البوتات",
+    title: "وجهات البوتات",
+    lead: "لكل بطاقة بوت رابط. اتركه فارغاً ليبقى المسار الداخلي للبوت.",
+    save: "حفظ الروابط",
+    saved: "تم حفظ الروابط",
+    invalid: "الرابط يجب أن يبدأ بـ / أو http.",
+    schema: "نفّذ الملف supabase/migrations/20261117210000_bot_links.sql في محرر SQL قبل حفظ وجهات البوتات.",
+  },
   inbox: {
     title: "الرسائل",
     lead: "شهادات الإتمام والرسائل من الإدارة تصل هنا.",
@@ -542,6 +551,15 @@ const en: typeof ar = {
     empty: "No notices yet.",
     read: "Mark all read",
     schema: "Run supabase/migrations/20261117190000_signup_notifications.sql in the SQL editor to turn on new-student notices.",
+  },
+  botLinks: {
+    nav: "Bots",
+    title: "Bot destinations",
+    lead: "Each bot card can open its own link. Leave it empty to keep the built-in bot page.",
+    save: "Save links",
+    saved: "Links saved",
+    invalid: "A link must start with / or http.",
+    schema: "Run supabase/migrations/20261117210000_bot_links.sql in the SQL editor before saving bot destinations.",
   },
   inbox: {
     title: "Messages",

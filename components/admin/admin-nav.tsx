@@ -8,6 +8,7 @@ const links = [
   { href: "/admin", id: "members" },
   { href: "/admin/courses", id: "courses" },
   { href: "/admin/pricing", id: "pricing" },
+  { href: "/admin/bots", id: "bots" },
 ] as const;
 
 export function AdminNav({ current }: { current: (typeof links)[number]["id"] }) {
@@ -16,6 +17,7 @@ export function AdminNav({ current }: { current: (typeof links)[number]["id"] })
     members: t.catalog.members,
     courses: t.catalog.nav,
     pricing: t.pricing.nav,
+    bots: t.botLinks.nav,
   };
   return (
     <nav className="mb-6 flex flex-wrap gap-2">

@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { BotCardLink } from "@/components/bot-card-link";
+import { useBotLinks } from "@/components/use-bot-links";
+import { botCardHref } from "@/lib/bot-links";
 import { bots } from "@/config/bots";
 import { landing, offer, testimonials } from "@/config/site";
 import { works } from "@/data/works";
@@ -16,6 +19,7 @@ import { cn } from "@/lib/utils";
 export function HomePage() {
   const { t, tx } = useI18n();
   const pricing = usePricing();
+  const botLinks = useBotLinks();
   return (
     <>
       <section className="mx-auto grid max-w-6xl min-w-0 items-center gap-12 px-4 py-14 md:grid-cols-2 md:py-20">
@@ -170,12 +174,10 @@ export function HomePage() {
                 <p className="mt-2 text-sm leading-7 text-muted">{tx(bot.summary)}</p>
               </article>
             );
-            return bot.enabled ? (
-              <Link key={bot.slug} href={`/dashboard/${bot.slug}`} className="block">
+            return (
+              <BotCardLink key={bot.slug} href={botCardHref(bot.slug, bot.enabled, botLinks)} className="block">
                 {card}
-              </Link>
-            ) : (
-              <div key={bot.slug}>{card}</div>
+              </BotCardLink>
             );
           })}
         </div>

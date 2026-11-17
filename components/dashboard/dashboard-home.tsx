@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { bots } from "@/config/bots";
 import { AppHeader } from "@/components/app-header";
+import { BotCardLink } from "@/components/bot-card-link";
+import { useBotLinks } from "@/components/use-bot-links";
+import { botCardHref } from "@/lib/bot-links";
 import { CoursesSection } from "@/components/dashboard/courses-section";
 import { useI18n } from "@/components/locale-provider";
 import { useMe } from "@/components/use-me";
@@ -11,6 +14,7 @@ import { cn } from "@/lib/utils";
 export function DashboardHome() {
   const { t, tx } = useI18n();
   const { me, failed } = useMe();
+  const links = useBotLinks();
 
   return (
     <div className="min-h-dvh">
@@ -55,9 +59,9 @@ export function DashboardHome() {
               </article>
             );
             return (
-              <Link key={bot.slug} href={`/dashboard/${bot.slug}`} className="transition hover:scale-[1.015]">
+              <BotCardLink key={bot.slug} href={botCardHref(bot.slug, bot.enabled, links)} className="transition hover:scale-[1.015]">
                 {inner}
-              </Link>
+              </BotCardLink>
             );
           })}
         </div>
