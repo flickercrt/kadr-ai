@@ -26,6 +26,7 @@ type Student = {
   status: string;
   provider: string | null;
   currentPeriodEnd: string | null;
+  courseIds: string[];
 };
 
 type ApiError = { error?: { code?: string; ar?: string; en?: string } };
@@ -45,6 +46,9 @@ export function AdminPanel() {
   const [configured, setConfigured] = useState(true);
   const [forbidden, setForbidden] = useState(false);
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [courseFilter, setCourseFilter] = useState("all");
+  const [courseOptions, setCourseOptions] = useState<{ id: string; title: string }[]>([]);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
@@ -84,6 +88,7 @@ export function AdminPanel() {
     }
     setConfigured(Boolean(data.configured));
     setStudents(data.students ?? []);
+    setCourseOptions((data as { courses?: { id: string; title: string }[] }).courses ?? []);
     setLoading(false);
   }, [locale, t]);
 
@@ -191,6 +196,8 @@ export function AdminPanel() {
 
   const needle = query.trim().toLowerCase();
   const visible = students.filter((student) => {
+    if (statusFilter !== "all" && student.status !== statusFilter) return false;
+    if (courseFilter !== "all" && !(student.courseIds ?? []).includes(courseFilter)) return false;
     if (!needle) return true;
     return `${student.username ?? ""} ${student.email ?? ""} ${student.name ?? ""}`.toLowerCase().includes(needle);
   });
@@ -207,7 +214,20 @@ export function AdminPanel() {
         {notice ? <p className="mt-4 text-sm text-primary" role="status">{notice}</p> : null}
         {!configured ? <p className="mt-4 rounded-lg border border-border bg-surface p-4 text-sm">{t.admin.unconfigured}</p> : null}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <Input className="max-w-sm" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.admin.search} />
+          <div className="flex flex-wrap gap-2">
+            <Input className="max-w-sm" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.admin.search} />
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-11 rounded-lg border border-border bg-background px-3 text-sm">
+              <option value="all">{t.admin.filterStatus}</option>
+              <option value="active">{t.admin.activate}</option>
+              <option value="inactive">{t.dash.inactive}</option>
+            </select>
+            <select value={courseFilter} onChange={(event) => setCourseFilter(event.target.value)} className="h-11 rounded-lg border border-border bg-background px-3 text-sm">
+              <option value="all">{t.admin.filterCourse}</option>
+              {courseOptions.map((course) => (
+                <option key={course.id} value={course.id}>{course.title}</option>
+              ))}
+            </select>
+          </div>
           {configured && !forbidden ? (
             <Button type="button" onClick={() => (showForm ? closeForm() : setShowForm(true))}>
               {showForm ? t.common.cancel : t.admin.add}

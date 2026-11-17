@@ -42,9 +42,24 @@ export async function GET() {
     .select("user_id, status, provider, current_period_end");
   if (subscriptionError) return jsonError(500, "failed");
   const byUser = new Map((subscriptions ?? []).map((row) => [row.user_id, row]));
+  const courseIdsByUser = new Map<string, Set<string>>();
+  const progress = await gate.admin.from("lesson_progress").select("user_id, lesson_id");
+  const lessonRows = progress.error ? null : await gate.admin.from("lessons").select("id, course_id");
+  if (!progress.error && lessonRows && !lessonRows.error) {
+    const courseOf = new Map((lessonRows.data ?? []).map((row) => [row.id, row.course_id as string]));
+    for (const row of progress.data ?? []) {
+      const courseId = courseOf.get(row.lesson_id);
+      if (!courseId) continue;
+      const set = courseIdsByUser.get(row.user_id) ?? new Set<string>();
+      set.add(courseId);
+      courseIdsByUser.set(row.user_id, set);
+    }
+  }
+  const courseList = await gate.admin.from("courses").select("id, title").order("position", { ascending: true });
 
   return Response.json({
     configured: true,
+    courses: courseList.error ? [] : (courseList.data ?? []).map((course) => ({ id: course.id, title: course.title })),
     students: (profiles ?? []).map((profile) => {
       const subscription = byUser.get(profile.id);
       const identity = displayIdentity(profile.email);
@@ -58,6 +73,7 @@ export async function GET() {
         status: subscription?.status ?? "inactive",
         provider: subscription?.provider ?? null,
         currentPeriodEnd: subscription?.current_period_end ?? null,
+        courseIds: [...(courseIdsByUser.get(profile.id) ?? [])],
       };
     }),
   });
