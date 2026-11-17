@@ -1,0 +1,38 @@
+import { z } from "zod";
+import { requireAdminCaller } from "@/lib/admin-auth";
+import { jsonError } from "@/lib/http";
+import { cleanAvatarUrl, cleanDisplayName } from "@/lib/profile";
+
+const bodySchema = z.object({
+  userId: z.uuid(),
+  name: z.string(),
+  avatarUrl: z.string(),
+});
+
+export async function POST(request: Request) {
+  const gate = await requireAdminCaller();
+  if (gate.denied) return gate.denied;
+  if (!gate.admin) return jsonError(503, "config");
+  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return jsonError(400, "invalid");
+  const name = cleanDisplayName(parsed.data.name);
+  const avatarUrl = cleanAvatarUrl(parsed.data.avatarUrl);
+  if (name === null || avatarUrl === null) return jsonError(400, "invalid");
+
+  const { data: profile } = await gate.admin.from("profiles").select("id").eq("id", parsed.data.userId).maybeSingle();
+  if (!profile) return jsonError(404, "not_found");
+
+  const updated = await gate.admin
+    .from("profiles")
+    .update({ full_name: name, avatar_url: avatarUrl || null })
+    .eq("id", parsed.data.userId);
+  if (updated.error && /avatar_url/.test(updated.error.message)) {
+    const nameOnly = await gate.admin.from("profiles").update({ full_name: name }).eq("id", parsed.data.userId);
+    if (nameOnly.error) return jsonError(500, "failed");
+    if (avatarUrl) return jsonError(503, "config");
+    return Response.json({ ok: true, avatarSaved: false });
+  }
+  if (updated.error) return jsonError(500, "failed");
+  await gate.admin.auth.admin.updateUserById(parsed.data.userId, { user_metadata: { full_name: name } }).catch(() => undefined);
+  return Response.json({ ok: true, avatarSaved: true });
+}

@@ -27,11 +27,15 @@ export async function GET() {
   if (gate.denied) return gate.denied;
   if (!gate.admin) return Response.json({ configured: false, students: [] });
 
-  const { data: profiles, error } = await gate.admin
+  const withAvatar = await gate.admin
     .from("profiles")
-    .select("id, email, full_name, created_at")
+    .select("id, email, full_name, avatar_url, created_at")
     .order("created_at", { ascending: false });
-  if (error) return jsonError(500, "failed");
+  const profilesResult = withAvatar.error && /avatar_url/.test(withAvatar.error.message)
+    ? await gate.admin.from("profiles").select("id, email, full_name, created_at").order("created_at", { ascending: false })
+    : withAvatar;
+  if (profilesResult.error) return jsonError(500, "failed");
+  const profiles = profilesResult.data;
 
   const { data: subscriptions, error: subscriptionError } = await gate.admin
     .from("subscriptions")
@@ -49,6 +53,7 @@ export async function GET() {
         email: identity.email,
         username: identity.username,
         name: profile.full_name,
+        avatar: "avatar_url" in profile ? (profile.avatar_url as string | null) : null,
         status: subscription?.status ?? "inactive",
         provider: subscription?.provider ?? null,
         currentPeriodEnd: subscription?.current_period_end ?? null,

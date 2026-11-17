@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AdminNav } from "@/components/admin/admin-nav";
+import { Avatar } from "@/components/avatar";
 import { ProgressPanel } from "@/components/admin/progress-panel";
 import { AppHeader } from "@/components/app-header";
 import { useI18n } from "@/components/locale-provider";
@@ -10,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { useMe } from "@/components/use-me";
 import type { Locale } from "@/lib/i18n";
+import { cleanAvatarUrl, cleanDisplayName, fileToAvatar } from "@/lib/profile";
 import { isValidUsername, normalizeUsername, STUDENT_PASSWORD_MAX, STUDENT_PASSWORD_MIN } from "@/lib/username";
 
 type Student = {
@@ -17,6 +19,7 @@ type Student = {
   email: string | null;
   username: string | null;
   name: string | null;
+  avatar: string | null;
   status: string;
   provider: string | null;
   currentPeriodEnd: string | null;
@@ -53,6 +56,11 @@ export function AdminPanel() {
   const [nextPassword, setNextPassword] = useState("");
   const [resetError, setResetError] = useState("");
   const [resetting, setResetting] = useState(false);
+  const [profileFor, setProfileFor] = useState<Student | null>(null);
+  const [profileName, setProfileName] = useState("");
+  const [profileAvatar, setProfileAvatar] = useState("");
+  const [profileError, setProfileError] = useState("");
+  const [profilePending, setProfilePending] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -273,7 +281,12 @@ export function AdminPanel() {
                   <td className="p-3">
                     <span dir="ltr">{identityOf(student)}</span>
                   </td>
-                  <td className="p-3">{student.name}</td>
+                  <td className="p-3">
+                    <span className="inline-flex items-center gap-2">
+                      <Avatar name={student.name || student.username || ""} src={student.avatar} size={28} />
+                      {student.name}
+                    </span>
+                  </td>
                   <td className="p-3">{student.status}</td>
                   <td className="p-3">{student.provider || "—"}</td>
                   <td className="p-3">
@@ -297,6 +310,18 @@ export function AdminPanel() {
                         }}
                       >
                         {t.admin.reset}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setProfileError("");
+                          setProfileName(student.name ?? "");
+                          setProfileAvatar(student.avatar ?? "");
+                          setProfileFor(student);
+                        }}
+                      >
+                        {t.admin.editProfile}
                       </Button>
                     </div>
                   </td>
@@ -334,6 +359,85 @@ export function AdminPanel() {
             <Button type="button" variant="outline" onClick={closeReset}>
               {t.common.cancel}
             </Button>
+          </div>
+        </form>
+      </Modal>
+      <Modal
+        open={profileFor !== null}
+        onOpenChange={(open) => {
+          if (!open) setProfileFor(null);
+        }}
+        title={t.admin.editProfileTitle}
+      >
+        <form
+          className="space-y-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!profileFor) return;
+            if (cleanDisplayName(profileName) === null || cleanAvatarUrl(profileAvatar) === null) {
+              setProfileError(t.account.profileInvalid);
+              return;
+            }
+            void (async () => {
+              setProfilePending(true);
+              setProfileError("");
+              const response = await fetch("/api/admin/students/profile", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: profileFor.id, name: profileName, avatarUrl: profileAvatar }),
+              });
+              const data = (await response.json().catch(() => ({}))) as ApiError;
+              setProfilePending(false);
+              if (!response.ok) {
+                setProfileError(data.error?.code === "config" ? t.account.profileSchema : errorText(data, locale, t.account.profileInvalid));
+                return;
+              }
+              setProfileFor(null);
+              setNotice(t.account.profileSaved);
+              await load();
+            })();
+          }}
+        >
+          {profileFor ? (
+            <div className="flex items-center gap-3">
+              <Avatar name={profileName} src={profileAvatar} size={48} />
+              <span dir="ltr" className="text-sm text-muted">{identityOf(profileFor)}</span>
+            </div>
+          ) : null}
+          <label className="block text-sm">
+            <span className="mb-1 block text-muted">{t.account.profileName}</span>
+            <Input value={profileName} onChange={(event) => setProfileName(event.target.value)} maxLength={80} />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block text-muted">{t.account.profilePhoto}</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="block text-xs text-muted"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                void fileToAvatar(file).then((value) => {
+                  if (value) setProfileAvatar(value);
+                  else setProfileError(t.account.profileInvalid);
+                });
+              }}
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block text-muted">{t.account.profileUrl}</span>
+            <Input
+              value={profileAvatar.startsWith("data:") ? "" : profileAvatar}
+              onChange={(event) => setProfileAvatar(event.target.value)}
+              dir="ltr"
+              className="text-left"
+              placeholder="https://"
+            />
+          </label>
+          {profileError ? <p className="text-sm text-secondary" role="alert">{profileError}</p> : null}
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" disabled={profilePending}>{profilePending ? t.common.loading : t.account.profileSave}</Button>
+            <Button type="button" variant="outline" onClick={() => setProfileFor(null)}>{t.common.cancel}</Button>
           </div>
         </form>
       </Modal>

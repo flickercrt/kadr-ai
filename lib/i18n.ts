@@ -180,6 +180,8 @@ const ar = {
     resetDone: "تم تغيير كلمة السر",
     usernameHint: "أحرف لاتينية أو أرقام أو . _ - ، من 2 إلى 32، ويبدأ بحرف أو رقم.",
     passwordHint: "ستة أحرف على الأقل.",
+    editProfile: "الملف",
+    editProfileTitle: "اسم الطالب وصورته",
   },
   catalog: {
     members: "العضويات",
@@ -438,6 +440,8 @@ const en: typeof ar = {
     resetDone: "Password updated",
     usernameHint: "Letters, digits, or . _ -, 2–32 characters, starting with a letter or number.",
     passwordHint: "At least six characters.",
+    editProfile: "Profile",
+    editProfileTitle: "Student name and photo",
   },
   catalog: {
     members: "Memberships",
