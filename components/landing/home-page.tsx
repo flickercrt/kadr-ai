@@ -12,6 +12,7 @@ import { Countdown } from "@/components/countdown";
 import { PriceOffer } from "@/components/price-offer";
 import { usePricing } from "@/components/use-pricing";
 import { FrameArt } from "@/components/frame-art";
+import { HomeFaq } from "@/components/landing/home-faq";
 import { HomeVideos } from "@/components/landing/home-videos";
 import { Mark } from "@/components/logo";
 import { useI18n } from "@/components/locale-provider";
@@ -235,6 +236,8 @@ export function HomePage() {
           ))}
         </div>
       </Section>
+
+      <HomeFaq />
 
       <section className="mx-auto max-w-6xl px-4 pb-20">
         <div className="rounded-lg border border-border bg-surface px-6 py-10 text-center md:px-12">
