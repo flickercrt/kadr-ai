@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Avatar } from "@/components/avatar";
 import { ProgressPanel } from "@/components/admin/progress-panel";
+import { SignupNotices } from "@/components/admin/signup-notices";
 import { AppHeader } from "@/components/app-header";
 import { useI18n } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
@@ -330,6 +331,7 @@ export function AdminPanel() {
             </tbody>
           </table>
         </div>
+        <SignupNotices />
         <ProgressPanel />
       </div>
       <Modal open={resetFor !== null} onOpenChange={(open) => { if (!open) closeReset(); }} title={t.admin.resetTitle}>

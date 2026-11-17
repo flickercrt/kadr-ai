@@ -250,6 +250,13 @@ const ar = {
     completed: "مكتمل",
     mark: "تعليم كمكتمل",
   },
+  notices: {
+    title: "طلاب جدد",
+    lead: "يظهر هنا كل حساب يُنشأ، من التسجيل أو من إضافة طالب.",
+    empty: "لا إشعارات بعد.",
+    read: "تعليم الكل كمقروء",
+    schema: "نفّذ الملف supabase/migrations/20261117190000_signup_notifications.sql في محرر SQL لتفعيل إشعارات الطلاب الجدد.",
+  },
   inbox: {
     title: "الرسائل",
     lead: "شهادات الإتمام والرسائل من الإدارة تصل هنا.",
@@ -520,6 +527,13 @@ const en: typeof ar = {
     percent: "Percent",
     completed: "Complete",
     mark: "Mark complete",
+  },
+  notices: {
+    title: "New students",
+    lead: "Every account shows up here, whether they signed up or an admin added them.",
+    empty: "No notices yet.",
+    read: "Mark all read",
+    schema: "Run supabase/migrations/20261117190000_signup_notifications.sql in the SQL editor to turn on new-student notices.",
   },
   inbox: {
     title: "Messages",
