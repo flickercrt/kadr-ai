@@ -83,5 +83,22 @@ export async function GET() {
       .sort((a, b) => a.position - b.position),
   }));
 
-  return Response.json({ ready: true, active: true, courses });
+  const lessonIds = courses.flatMap((course) => course.lessons.map((lesson) => lesson.id));
+  let completedLessonIds: string[] = [];
+  let progressReady = true;
+  if (lessonIds.length > 0) {
+    const { data: progress, error: progressError } = await admin
+      .from("lesson_progress")
+      .select("lesson_id")
+      .eq("user_id", user.id)
+      .in("lesson_id", lessonIds);
+    if (progressError) {
+      if (!isMissingRelation(progressError)) return jsonError(500, "failed");
+      progressReady = false;
+    } else {
+      completedLessonIds = (progress ?? []).map((row) => row.lesson_id as string);
+    }
+  }
+
+  return Response.json({ ready: true, progressReady, active: true, courses, completedLessonIds });
 }

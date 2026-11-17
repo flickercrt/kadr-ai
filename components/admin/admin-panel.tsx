@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AdminNav } from "@/components/admin/admin-nav";
+import { ProgressPanel } from "@/components/admin/progress-panel";
 import { AppHeader } from "@/components/app-header";
 import { useI18n } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
@@ -304,6 +305,7 @@ export function AdminPanel() {
             </tbody>
           </table>
         </div>
+        <ProgressPanel />
       </div>
       <Modal open={resetFor !== null} onOpenChange={(open) => { if (!open) closeReset(); }} title={t.admin.resetTitle}>
         <form onSubmit={(event) => void resetPassword(event)} className="space-y-3">

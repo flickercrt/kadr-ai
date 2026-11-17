@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
+import { Button } from "@/components/ui/button";
 import { useI18n } from "@/components/locale-provider";
 import { useMe } from "@/components/use-me";
 import type { CourseRecord, LessonRecord } from "@/lib/courses";
@@ -15,6 +16,7 @@ export function CourseView({ courseId }: { courseId: string }) {
   const [course, setCourse] = useState<CourseRecord | null | undefined>(undefined);
   const [active, setActive] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -22,7 +24,7 @@ export function CourseView({ courseId }: { courseId: string }) {
       void (async () => {
         try {
           const response = await fetch("/api/courses");
-          const data = (await response.json()) as { active?: boolean; courses?: CourseRecord[] };
+          const data = (await response.json()) as { active?: boolean; courses?: CourseRecord[]; completedLessonIds?: string[] };
           if (!response.ok) {
             setFailed(true);
             setCourse(null);
@@ -31,6 +33,7 @@ export function CourseView({ courseId }: { courseId: string }) {
           setActive(data.active !== false);
           const match = (data.courses ?? []).find((item) => item.id === courseId) ?? null;
           setCourse(match);
+          setCompleted(new Set(data.completedLessonIds ?? []));
           setSelectedId(match?.lessons[0]?.id ?? null);
         } catch {
           setFailed(true);
@@ -43,6 +46,24 @@ export function CourseView({ courseId }: { courseId: string }) {
 
   const selected: LessonRecord | null = course?.lessons.find((lesson) => lesson.id === selectedId) ?? course?.lessons[0] ?? null;
   const embed = selected ? youtubeEmbedUrl(selected.videoUrl) : null;
+
+  useEffect(() => {
+    if (!selected || !active) return;
+    const lessonId = selected.id;
+    const id = window.setTimeout(() => {
+      void markLesson(lessonId);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [selected, active]);
+
+  async function markLesson(lessonId: string) {
+    const response = await fetch("/api/courses/progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lessonId }),
+    });
+    if (response.ok) setCompleted((current) => new Set(current).add(lessonId));
+  }
 
   return (
     <div className="min-h-dvh">
@@ -81,7 +102,8 @@ export function CourseView({ courseId }: { courseId: string }) {
                         lesson.id === selected?.id ? "border-primary bg-primary/10" : "border-border bg-surface",
                       )}
                     >
-                      {lesson.title}
+                      <span>{lesson.title}</span>
+                      {completed.has(lesson.id) ? <span className="mt-1 block text-xs text-primary">{t.progress.completed}</span> : null}
                     </button>
                   </li>
                 ))}
@@ -91,6 +113,13 @@ export function CourseView({ courseId }: { courseId: string }) {
                   <>
                     <h2 className="text-2xl font-semibold">{selected.title}</h2>
                     {selected.description ? <p className="mt-2 text-sm leading-7 text-muted">{selected.description}</p> : null}
+                    <div className="mt-3">
+                      {completed.has(selected.id) ? (
+                        <p className="text-sm text-primary">{t.progress.completed}</p>
+                      ) : (
+                        <Button type="button" size="sm" onClick={() => void markLesson(selected.id)}>{t.progress.mark}</Button>
+                      )}
+                    </div>
                     {embed ? (
                       <div className="mt-4 overflow-hidden rounded-lg border border-border">
                         <iframe
