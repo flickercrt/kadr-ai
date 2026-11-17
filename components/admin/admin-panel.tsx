@@ -10,6 +10,7 @@ import { AppHeader } from "@/components/app-header";
 import { useI18n } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Modal } from "@/components/ui/modal";
 import { useMe } from "@/components/use-me";
 import type { Locale } from "@/lib/i18n";
@@ -49,6 +50,9 @@ export function AdminPanel() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [courseFilter, setCourseFilter] = useState("all");
   const [courseOptions, setCourseOptions] = useState<{ id: string; title: string }[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkBody, setBulkBody] = useState("");
+  const [bulkPending, setBulkPending] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
@@ -289,10 +293,45 @@ export function AdminPanel() {
         ) : null}
         {loading ? <p className="mt-6 text-sm text-muted">{t.common.loading}</p> : null}
         {!loading && visible.length === 0 && configured ? <p className="mt-6 text-sm text-muted">{t.admin.empty}</p> : null}
+        {selectedIds.length > 0 ? (
+          <form
+            className="mt-4 space-y-3 rounded-lg border border-border bg-surface p-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void (async () => {
+                setBulkPending(true);
+                setError("");
+                const response = await fetch("/api/admin/messages", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ userIds: selectedIds, body: bulkBody }),
+                });
+                const data = (await response.json().catch(() => ({}))) as ApiError;
+                setBulkPending(false);
+                if (!response.ok) {
+                  setError(data.error?.code === "config" ? t.inbox.schema : errorText(data, locale, t.common.error));
+                  return;
+                }
+                setBulkBody("");
+                setSelectedIds([]);
+                setNotice(t.admin.bulkSent);
+              })();
+            }}
+          >
+            <p className="text-sm font-semibold">{t.admin.bulk} ({selectedIds.length})</p>
+            <Textarea value={bulkBody} onChange={(event) => setBulkBody(event.target.value)} required maxLength={2000} />
+            <Button type="submit" disabled={bulkPending}>{bulkPending ? t.common.loading : t.admin.bulkSend}</Button>
+          </form>
+        ) : null}
         <div className="mt-4 overflow-x-auto rounded-lg border border-border">
           <table className="w-full min-w-[760px] text-sm">
             <thead className="bg-surface text-muted">
               <tr>
+                <th className="p-3 text-start font-medium">
+                  <button type="button" className="text-primary" onClick={() => setSelectedIds(selectedIds.length === visible.length ? [] : visible.map((student) => student.id))}>
+                    {selectedIds.length === visible.length && visible.length > 0 ? t.admin.clearSelected : t.admin.selectVisible}
+                  </button>
+                </th>
                 <th className="p-3 text-start font-medium">{t.admin.email}</th>
                 <th className="p-3 text-start font-medium">{t.admin.name}</th>
                 <th className="p-3 text-start font-medium">{t.admin.status}</th>
@@ -303,6 +342,16 @@ export function AdminPanel() {
             <tbody>
               {visible.map((student) => (
                 <tr key={student.id} className="border-t border-border">
+                  <td className="p-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(student.id)}
+                      onChange={(event) => {
+                        setSelectedIds((current) => event.target.checked ? [...current, student.id] : current.filter((id) => id !== student.id));
+                      }}
+                      aria-label={identityOf(student)}
+                    />
+                  </td>
                   <td className="p-3">
                     <span dir="ltr">{identityOf(student)}</span>
                   </td>
