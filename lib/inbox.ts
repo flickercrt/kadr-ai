@@ -4,6 +4,8 @@ import { createAdminSupabase } from "@/lib/supabase/admin";
 
 type Admin = NonNullable<ReturnType<typeof createAdminSupabase>>;
 
+export const DIRECT_CHAT_SUBJECT = "محادثة مع الإدارة";
+
 export async function ensureThread(admin: Admin, studentId: string, subject: string) {
   const { data: existing } = await admin
     .from("inbox_threads")

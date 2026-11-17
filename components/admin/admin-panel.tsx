@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Avatar } from "@/components/avatar";
@@ -408,6 +409,9 @@ export function AdminPanel() {
                         }}
                       >
                         {t.admin.editProfile}
+                      </Button>
+                      <Button size="sm" variant="outline" asChild>
+                        <Link href={`/admin/chat/${student.id}`}>{t.chatThread.open}</Link>
                       </Button>
                     </div>
                   </td>

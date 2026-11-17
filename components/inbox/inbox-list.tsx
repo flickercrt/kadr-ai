@@ -39,6 +39,7 @@ export function InboxList() {
       <AppHeader me={me} />
       <div className="mx-auto max-w-3xl px-4 py-10">
         <h1 className="text-3xl font-semibold">{t.inbox.title}</h1>
+        <Link href="/messages/chat" className="mt-4 inline-block rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">{t.chatThread.title}</Link>
         <p className="mt-2 text-sm leading-7 text-muted">{t.inbox.lead}</p>
         {failed ? <p className="mt-4 text-sm text-secondary">{t.common.error}</p> : null}
         {!ready ? <p className="mt-4 rounded-lg border border-border bg-surface p-4 text-sm leading-7">{t.inbox.schema}</p> : null}

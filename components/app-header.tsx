@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 import { Logo } from "@/components/logo";
@@ -11,6 +12,26 @@ import type { MeResponse } from "@/lib/types";
 export function AppHeader({ me }: { me: MeResponse | null }) {
   const { locale, setLocale, t } = useI18n();
   const router = useRouter();
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    if (!me?.user) return;
+    const load = () => {
+      void fetch("/api/chat-thread?peek=1")
+        .then(async (response) => {
+          if (!response.ok) return;
+          const data = (await response.json()) as { unread?: number };
+          setUnread(data.unread ?? 0);
+        })
+        .catch(() => undefined);
+    };
+    const start = window.setTimeout(load, 0);
+    const poll = window.setInterval(load, 15000);
+    return () => {
+      window.clearTimeout(start);
+      window.clearInterval(poll);
+    };
+  }, [me?.user]);
 
   async function logout() {
     const supabase = createBrowserSupabase();
@@ -36,8 +57,9 @@ export function AppHeader({ me }: { me: MeResponse | null }) {
           </span>
         ) : null}
         {me?.user ? (
-          <Link href="/messages" className="text-muted hover:text-foreground">
+          <Link href="/messages/chat" className="text-muted hover:text-foreground">
             {t.inbox.title}
+            {unread > 0 ? <span className="ms-1 rounded-full bg-[#FF6B4A] px-1.5 text-xs text-white">{unread}</span> : null}
           </Link>
         ) : null}
         <Link href="/account" className="inline-flex items-center gap-2 text-muted hover:text-foreground">
