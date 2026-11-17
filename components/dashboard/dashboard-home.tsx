@@ -23,7 +23,10 @@ export function DashboardHome() {
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-3xl font-semibold">{t.dash.title}</h1>
-          <Link href="/dashboard/favorites" className="text-sm text-primary">{t.favorites.title}</Link>
+          <span className="flex gap-3 text-sm">
+            <Link href="/dashboard/timeline" className="text-primary">{t.timeline.title}</Link>
+            <Link href="/dashboard/favorites" className="text-primary">{t.favorites.title}</Link>
+          </span>
         </div>
         <p className="mt-2 max-w-2xl text-muted">{t.dash.lead}</p>
         <RenewalBanner />
