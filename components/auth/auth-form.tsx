@@ -104,7 +104,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       <h1 className="text-3xl font-semibold">{mode === "login" ? t.auth.loginTitle : t.auth.signupTitle}</h1>
       <p className="mt-2 text-sm text-muted">{mode === "login" ? t.auth.loginLead : t.auth.signupLead}</p>
       {!configured ? <p className="mt-4 rounded-lg border border-secondary/40 bg-secondary/10 p-3 text-sm">{t.auth.configMissing}</p> : null}
-      <form onSubmit={onSubmit} className="mt-6 space-y-3">
+      <form onSubmit={onSubmit} noValidate className="mt-6 space-y-3">
         {mode === "signup" ? (
           <label className="block text-sm">
             <span className="mb-1 block text-muted">{t.auth.name}</span>
@@ -137,12 +137,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             dir="ltr"
             className="text-left"
             required
-            minLength={mode === "login" ? STUDENT_PASSWORD_MIN : 8}
           />
         </label>
         {error ? <p className="text-sm text-secondary">{error}</p> : null}
         {info ? <p className="text-sm text-primary">{info}</p> : null}
-        <Button type="submit" className="w-full" disabled={pending || !configured}>
+        <Button type="submit" className="w-full" disabled={pending}>
           {pending ? t.common.loading : mode === "login" ? t.auth.submitLogin : t.auth.submitSignup}
         </Button>
       </form>
