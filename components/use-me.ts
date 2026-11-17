@@ -10,6 +10,11 @@ export function useMe() {
   const reload = useCallback(async () => {
     try {
       const response = await fetch("/api/me");
+      if (!response.ok) {
+        setMe(null);
+        setFailed(response.status !== 401 && response.status !== 403);
+        return null;
+      }
       const data = (await response.json()) as MeResponse;
       setMe(data);
       setFailed(false);

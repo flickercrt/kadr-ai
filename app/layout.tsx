@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
 import { brand, brandStyle, localeStorageKey } from "@/config/site";
 import { LocaleProvider } from "@/components/locale-provider";
+import { MaintenanceBanner } from "@/components/maintenance-banner";
 import "./globals.css";
 
 const inter = Inter({
@@ -47,7 +48,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="min-h-full">
         <script dangerouslySetInnerHTML={{ __html: boot }} />
-        <LocaleProvider>{children}</LocaleProvider>
+        <LocaleProvider>
+          <MaintenanceBanner />
+          {children}
+        </LocaleProvider>
       </body>
     </html>
   );
