@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requireAdminCaller } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity";
 import { isMissingRelation } from "@/lib/db-errors";
 import { parseHomepageVideo, type HomepageVideo } from "@/lib/homepage-videos";
 import { jsonError } from "@/lib/http";
@@ -66,6 +67,17 @@ export async function POST(request: Request) {
   if (!parsed.success) return jsonError(400, "invalid");
   const body = parsed.data;
   const now = new Date().toISOString();
+  const done = async () => {
+    await logActivity({
+      actorId: gate.user.id,
+      actorEmail: gate.user.email,
+      actorRole: "admin",
+      action: "video.updated",
+      targetType: "homepage_video",
+      metadata: { op: body.action },
+    });
+    return Response.json({ ok: true });
+  };
 
   if (body.action === "create" || body.action === "update") {
     const content = parseHomepageVideo(body);
@@ -87,13 +99,13 @@ export async function POST(request: Request) {
         .eq("id", body.id);
       if (error) return relationOrFailed(error);
     }
-    return Response.json({ ok: true });
+    return done();
   }
 
   if (body.action === "delete") {
     const { error } = await admin.from("homepage_videos").delete().eq("id", body.id);
     if (error) return relationOrFailed(error);
-    return Response.json({ ok: true });
+    return done();
   }
 
   const results = await Promise.all(
@@ -101,5 +113,5 @@ export async function POST(request: Request) {
   );
   const failure = results.find((result) => result.error);
   if (failure?.error) return relationOrFailed(failure.error);
-  return Response.json({ ok: true });
+  return done();
 }

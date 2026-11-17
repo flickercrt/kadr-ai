@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requireAdminCaller } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity";
 import { isMissingRelation } from "@/lib/db-errors";
 import { jsonError } from "@/lib/http";
 import { isHttpUrl } from "@/lib/youtube";
@@ -89,6 +90,18 @@ export async function POST(request: Request) {
   if (!parsed.success) return jsonError(400, "invalid");
   const body = parsed.data;
   const now = new Date().toISOString();
+  const done = async (targetId?: string) => {
+    await logActivity({
+      actorId: gate.user.id,
+      actorEmail: gate.user.email,
+      actorRole: "admin",
+      action: "gallery.updated",
+      targetType: "gallery",
+      targetId: targetId ?? null,
+      metadata: { op: body.action },
+    });
+    return Response.json({ ok: true });
+  };
 
   if (body.action === "create-category" || body.action === "update-category") {
     const name = body.name.trim();
@@ -101,13 +114,13 @@ export async function POST(request: Request) {
       const { error } = await admin.from("gallery_categories").update({ name }).eq("id", body.id);
       if (error) return isMissingRelation(error) ? jsonError(503, "config") : jsonError(500, "failed");
     }
-    return Response.json({ ok: true });
+    return done();
   }
 
   if (body.action === "delete-category") {
     const { error } = await admin.from("gallery_categories").delete().eq("id", body.id);
     if (error) return isMissingRelation(error) ? jsonError(503, "config") : jsonError(500, "failed");
-    return Response.json({ ok: true });
+    return done();
   }
 
   if (body.action === "reorder-categories" || body.action === "reorder-items") {
@@ -115,13 +128,13 @@ export async function POST(request: Request) {
     const results = await Promise.all(body.ids.map((id, index) => admin.from(table).update({ position: index, ...(table === "gallery_items" ? { updated_at: now } : {}) }).eq("id", id)));
     const failure = results.find((result) => result.error);
     if (failure?.error) return isMissingRelation(failure.error) ? jsonError(503, "config") : jsonError(500, "failed");
-    return Response.json({ ok: true });
+    return done();
   }
 
   if (body.action === "delete-item") {
     const { error } = await admin.from("gallery_items").delete().eq("id", body.id);
     if (error) return isMissingRelation(error) ? jsonError(503, "config") : jsonError(500, "failed");
-    return Response.json({ ok: true });
+    return done();
   }
 
   const content = cleanItem(body);
@@ -134,5 +147,5 @@ export async function POST(request: Request) {
     const { error } = await admin.from("gallery_items").update({ ...content, updated_at: now }).eq("id", body.id);
     if (error) return isMissingRelation(error) ? jsonError(503, "config") : jsonError(500, "failed");
   }
-  return Response.json({ ok: true });
+  return done();
 }

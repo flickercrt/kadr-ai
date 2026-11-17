@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requireAdminCaller } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity";
 import { isMissingRelation } from "@/lib/db-errors";
 import { jsonError } from "@/lib/http";
 import { configSettings, pricingFromSettings, type DiscountKind, type PricingSettings } from "@/lib/pricing";
@@ -68,5 +69,13 @@ export async function POST(request: Request) {
     updated_at: new Date().toISOString(),
   });
   if (error) return isMissingRelation(error) ? jsonError(503, "config") : jsonError(500, "failed");
+  await logActivity({
+    actorId: gate.user.id,
+    actorEmail: gate.user.email,
+    actorRole: "admin",
+    action: "pricing.updated",
+    targetType: "pricing",
+    metadata: { monthlyPrice: body.monthlyPrice, discountKind: body.discountKind, discountValue: body.discountValue },
+  });
   return Response.json({ ok: true, preview: pricingFromSettings(body, Date.now()) });
 }

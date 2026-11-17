@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requireAdminCaller } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity";
 import { jsonError } from "@/lib/http";
 
 
@@ -25,5 +26,14 @@ export async function POST(request: Request) {
     updated_at: new Date().toISOString(),
   });
   if (error) return jsonError(500, "unavailable");
+  await logActivity({
+    actorId: gate.user.id,
+    actorEmail: gate.user.email,
+    actorRole: "admin",
+    action: "subscription.updated",
+    targetType: "user",
+    targetId: parsed.data.userId,
+    metadata: { active: parsed.data.active },
+  });
   return Response.json({ ok: true });
 }

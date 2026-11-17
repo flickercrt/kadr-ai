@@ -1,4 +1,5 @@
 import "server-only";
+import { logActivity } from "@/lib/activity";
 import { isMissingRelation } from "@/lib/db-errors";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
@@ -84,6 +85,14 @@ export async function issueCourseCertificate(admin: Admin, userId: string, cours
       body: `شهادة إتمام\nالاسم: ${name}\nالدورة: ${course.title}\nالتاريخ: ${issuedAt.slice(0, 10)}\n/certificates/${created.id}`,
     });
   }
+  await logActivity({
+    actorId: userId,
+    actorRole: "student",
+    action: "certificate.issued",
+    targetType: "certificate",
+    targetId: created.id as string,
+    metadata: { courseId },
+  });
   return { id: created.id as string };
 }
 

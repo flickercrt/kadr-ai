@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requireAdminCaller } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity";
 import { jsonError } from "@/lib/http";
 import { STUDENT_PASSWORD_MAX, STUDENT_PASSWORD_MIN } from "@/lib/username";
 
@@ -33,5 +34,13 @@ export async function POST(request: Request) {
     if (isWeakPassword(error)) return jsonError(400, "password_short");
     return jsonError(500, "failed");
   }
+  await logActivity({
+    actorId: gate.user.id,
+    actorEmail: gate.user.email,
+    actorRole: "admin",
+    action: "student.password_reset",
+    targetType: "user",
+    targetId: userId,
+  });
   return Response.json({ ok: true });
 }

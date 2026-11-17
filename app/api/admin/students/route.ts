@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requireAdminCaller } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity";
 import { jsonError } from "@/lib/http";
 import { displayIdentity, isValidUsername, normalizeUsername, STUDENT_PASSWORD_MAX, STUDENT_PASSWORD_MIN, studentEmailForUsername } from "@/lib/username";
 
@@ -137,5 +138,14 @@ export async function POST(request: Request) {
   );
   if (subscriptionError) return jsonError(500, "membership_failed");
 
+  await logActivity({
+    actorId: gate.user.id,
+    actorEmail: gate.user.email,
+    actorRole: "admin",
+    action: "student.created",
+    targetType: "user",
+    targetId: userId,
+    metadata: { username },
+  });
   return Response.json({ ok: true, id: userId, username });
 }

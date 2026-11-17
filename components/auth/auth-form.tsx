@@ -80,6 +80,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       setError(signError.message);
       return;
     }
+    void fetch("/api/activity/login", { method: "POST" }).catch(() => undefined);
     window.location.href = next;
   }
 

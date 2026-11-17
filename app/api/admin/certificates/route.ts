@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requireAdminCaller } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity";
 import { issueCourseCertificate } from "@/lib/inbox";
 import { jsonError } from "@/lib/http";
 
@@ -17,5 +18,14 @@ export async function POST(request: Request) {
     if (result.error === "incomplete") return jsonError(400, "invalid");
     return jsonError(500, "failed");
   }
+  await logActivity({
+    actorId: gate.user.id,
+    actorEmail: gate.user.email,
+    actorRole: "admin",
+    action: "certificate.issued",
+    targetType: "certificate",
+    targetId: result.id,
+    metadata: { userId: parsed.data.userId, courseId: parsed.data.courseId },
+  });
   return Response.json({ ok: true, id: result.id });
 }

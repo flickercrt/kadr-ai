@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { logActivity } from "@/lib/activity";
 import { isDemoMode } from "@/lib/env";
 import { isMissingRelation } from "@/lib/db-errors";
 import { jsonError } from "@/lib/http";
@@ -68,5 +69,14 @@ export async function POST(request: Request) {
     kind: "chat",
   });
   if (error) return isMissingRelation(error) ? jsonError(503, "config") : jsonError(500, "failed");
+  await logActivity({
+    actorId: user.id,
+    actorEmail: user.email,
+    actorRole: "student",
+    action: "message.sent",
+    targetType: "thread",
+    targetId: threadId,
+    metadata: { channel: "chat" },
+  });
   return Response.json({ ok: true });
 }

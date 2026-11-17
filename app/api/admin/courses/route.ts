@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requireCourseEditor } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity";
 import { cleanCourseContent, type CourseRecord, type LessonRecord } from "@/lib/courses";
 import { isMissingRelation } from "@/lib/db-errors";
 import { jsonError } from "@/lib/http";
@@ -100,6 +101,17 @@ export async function POST(request: Request) {
   if (!parsed.success) return jsonError(400, "invalid");
   const body = parsed.data;
   const now = new Date().toISOString();
+  const done = async () => {
+    await logActivity({
+      actorId: gate.user.id,
+      actorEmail: gate.user.email,
+      actorRole: "admin",
+      action: "course.updated",
+      targetType: "course",
+      metadata: { op: body.action },
+    });
+    return Response.json({ ok: true });
+  };
 
   if (body.action === "create-course" || body.action === "update-course" || body.action === "create-lesson" || body.action === "update-lesson") {
     const content = cleanCourseContent(body);
@@ -126,19 +138,19 @@ export async function POST(request: Request) {
       const { error } = await admin.from("lessons").update({ ...content, updated_at: now }).eq("id", body.id);
       if (error) return isMissingRelation(error) ? jsonError(503, "config") : jsonError(500, "failed");
     }
-    return Response.json({ ok: true });
+    return done();
   }
 
   if (body.action === "delete-course") {
     const { error } = await admin.from("courses").delete().eq("id", body.id);
     if (error) return isMissingRelation(error) ? jsonError(503, "config") : jsonError(500, "failed");
-    return Response.json({ ok: true });
+    return done();
   }
 
   if (body.action === "delete-lesson") {
     const { error } = await admin.from("lessons").delete().eq("id", body.id);
     if (error) return isMissingRelation(error) ? jsonError(503, "config") : jsonError(500, "failed");
-    return Response.json({ ok: true });
+    return done();
   }
 
   if (body.action === "reorder-courses") {
@@ -147,7 +159,7 @@ export async function POST(request: Request) {
     );
     const failure = results.find((result) => result.error);
     if (failure?.error) return isMissingRelation(failure.error) ? jsonError(503, "config") : jsonError(500, "failed");
-    return Response.json({ ok: true });
+    return done();
   }
 
   const results = await Promise.all(
@@ -157,5 +169,5 @@ export async function POST(request: Request) {
   );
   const failure = results.find((result) => result.error);
   if (failure?.error) return isMissingRelation(failure.error) ? jsonError(503, "config") : jsonError(500, "failed");
-  return Response.json({ ok: true });
+  return done();
 }

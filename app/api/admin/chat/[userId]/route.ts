@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requireAdminCaller } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity";
 import { isMissingRelation } from "@/lib/db-errors";
 import { jsonError } from "@/lib/http";
 import { DIRECT_CHAT_SUBJECT, ensureThread, postInboxMessage } from "@/lib/inbox";
@@ -50,5 +51,14 @@ export async function POST(request: Request, context: { params: Promise<{ userId
     kind: "chat",
   });
   if (error) return isMissingRelation(error) ? jsonError(503, "config") : jsonError(500, "failed");
+  await logActivity({
+    actorId: gate.user.id,
+    actorEmail: gate.user.email,
+    actorRole: "admin",
+    action: "message.sent",
+    targetType: "user",
+    targetId: userId,
+    metadata: { channel: "chat" },
+  });
   return Response.json({ ok: true });
 }

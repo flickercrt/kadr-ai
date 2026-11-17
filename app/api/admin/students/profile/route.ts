@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requireAdminCaller } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity";
 import { jsonError } from "@/lib/http";
 import { cleanAvatarUrl, cleanDisplayName } from "@/lib/profile";
 
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
     const nameOnly = await gate.admin.from("profiles").update({ full_name: name }).eq("id", parsed.data.userId);
     if (nameOnly.error) return jsonError(500, "failed");
     if (avatarUrl) return jsonError(503, "config");
+    await logActivity({ actorId: gate.user.id, actorEmail: gate.user.email, actorRole: "admin", action: "student.updated", targetType: "user", targetId: parsed.data.userId });
     return Response.json({ ok: true, avatarSaved: false });
   }
   if (updated.error) return jsonError(500, "failed");
@@ -40,5 +42,14 @@ export async function POST(request: Request) {
     if (roleUpdate.error && /role/.test(roleUpdate.error.message)) return jsonError(503, "config");
     if (roleUpdate.error) return jsonError(500, "failed");
   }
+  await logActivity({
+    actorId: gate.user.id,
+    actorEmail: gate.user.email,
+    actorRole: "admin",
+    action: "student.updated",
+    targetType: "user",
+    targetId: parsed.data.userId,
+    metadata: { role: parsed.data.role ?? null },
+  });
   return Response.json({ ok: true, avatarSaved: true });
 }

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requireAdminCaller } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity";
 import { isMissingRelation } from "@/lib/db-errors";
 import { jsonError } from "@/lib/http";
 import { clearMaintenanceCache } from "@/lib/maintenance-state";
@@ -61,5 +62,13 @@ export async function POST(request: Request) {
   );
   if (error) return isMissingRelation(error) ? jsonError(503, "config") : jsonError(500, "failed");
   clearMaintenanceCache();
+  await logActivity({
+    actorId: gate.user.id,
+    actorEmail: gate.user.email,
+    actorRole: "admin",
+    action: "maintenance.toggled",
+    targetType: "site",
+    metadata: { enabled: parsed.data.enabled },
+  });
   return Response.json({ ok: true, enabled: parsed.data.enabled, message });
 }
