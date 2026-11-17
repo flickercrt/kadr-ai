@@ -79,6 +79,11 @@ export function CourseView({ courseId }: { courseId: string }) {
           <>
             <h1 className="mt-4 text-3xl font-semibold">{course.title}</h1>
             {course.description ? <p className="mt-2 max-w-3xl text-sm leading-7 text-muted">{course.description}</p> : null}
+            {course.lessons.length > 0 && course.lessons.every((lesson) => completed.has(lesson.id)) ? (
+              <p className="mt-3 text-sm text-primary">
+                <Link href="/messages">{t.inbox.ready}</Link>
+              </p>
+            ) : null}
             {course.videoUrl && youtubeEmbedUrl(course.videoUrl) ? (
               <div className="mt-6 overflow-hidden rounded-lg border border-border">
                 <iframe

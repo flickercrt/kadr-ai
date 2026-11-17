@@ -35,6 +35,11 @@ export function AppHeader({ me }: { me: MeResponse | null }) {
             {me.usage.used}/{me.usage.limit}
           </span>
         ) : null}
+        {me?.user ? (
+          <Link href="/messages" className="text-muted hover:text-foreground">
+            {t.inbox.title}
+          </Link>
+        ) : null}
         <Link href="/account" className="inline-flex items-center gap-2 text-muted hover:text-foreground">
           {me?.user ? <Avatar name={me.user.name} src={me.user.avatar} size={28} /> : null}
           {t.nav.account}

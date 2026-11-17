@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isMissingRelation } from "@/lib/db-errors";
+import { issueReadyCertificates } from "@/lib/inbox";
 import { isDemoMode } from "@/lib/env";
 import { jsonError } from "@/lib/http";
 import { createAdminSupabase } from "@/lib/supabase/admin";
@@ -57,5 +58,6 @@ export async function POST(request: Request) {
     if (isMissingRelation(error)) return Response.json({ ready: false, saved: false });
     return jsonError(500, "failed");
   }
+  await issueReadyCertificates(admin, user.id);
   return Response.json({ ready: true, saved: true });
 }
