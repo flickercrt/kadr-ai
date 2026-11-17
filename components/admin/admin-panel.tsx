@@ -18,6 +18,8 @@ import { useMe } from "@/components/use-me";
 import type { Locale } from "@/lib/i18n";
 import { cleanAvatarUrl, cleanDisplayName } from "@/lib/profile";
 import { isValidUsername, normalizeUsername, STUDENT_PASSWORD_MAX, STUDENT_PASSWORD_MIN } from "@/lib/username";
+import { PaymentHistoryButton } from "@/components/admin/payment-history";
+import { isDemoMode } from "@/lib/env";
 
 type Student = {
   id: string;
@@ -81,8 +83,28 @@ export function AdminPanel() {
     const response = await fetch("/api/admin/students");
     const data = (await response.json()) as { configured?: boolean; students?: Student[] } & ApiError;
     if (response.status === 403) {
-      setForbidden(true);
-      setError(t.admin.forbidden);
+      if (!isDemoMode()) {
+        setForbidden(true);
+        setError(t.admin.forbidden);
+        setLoading(false);
+        return;
+      }
+      setForbidden(false);
+      setConfigured(true);
+      setStudents([
+        {
+          id: "00000000-0000-4000-8000-000000000001",
+          email: null,
+          username: "sara",
+          name: "سارة",
+          avatar: null,
+          role: "student",
+          status: "active",
+          provider: "stripe",
+          currentPeriodEnd: "2026-12-01T00:00:00.000Z",
+          courseIds: [],
+        },
+      ]);
       setLoading(false);
       return;
     }
@@ -413,6 +435,7 @@ export function AdminPanel() {
                       <Button size="sm" variant="outline" asChild>
                         <Link href={`/admin/chat/${student.id}`}>{t.chatThread.open}</Link>
                       </Button>
+                      <PaymentHistoryButton userId={student.id} />
                     </div>
                   </td>
                 </tr>

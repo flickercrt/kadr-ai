@@ -1,6 +1,6 @@
 import "server-only";
 import Stripe from "stripe";
-import type { PaymentProvider, SubscriptionUpdate } from "@/lib/payments/types";
+import type { PaymentProvider, PaymentRecord, SubscriptionUpdate, WebhookResult } from "@/lib/payments/types";
 import type { SubscriptionStatus } from "@/lib/types";
 
 function stripeClient() {
@@ -44,8 +44,7 @@ export const stripeProvider: PaymentProvider = {
 
   async createCheckout(input) {
     const stripe = stripeClient();
-    const price = process.env.STRIPE_PRICE_ID;
-    if (!stripe || !price) {
+    if (!stripe || !input.amountCents || input.amountCents < 50) {
       throw new Error("STRIPE_NOT_CONFIGURED");
     }
     const session = await stripe.checkout.sessions.create({
@@ -55,8 +54,17 @@ export const stripeProvider: PaymentProvider = {
       cancel_url: input.cancelUrl,
       metadata: { userId: input.userId },
       subscription_data: { metadata: { userId: input.userId } },
-      line_items: [{ price, quantity: 1 }],
-      allow_promotion_codes: true,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "usd",
+            unit_amount: input.amountCents,
+            recurring: { interval: "month" },
+            product_data: { name: "Kadr AI monthly membership" },
+          },
+        },
+      ],
       ...(input.customerId
         ? { customer: input.customerId }
         : { customer_email: input.email }),
@@ -82,14 +90,18 @@ export const stripeProvider: PaymentProvider = {
       throw new Error("STRIPE_NOT_CONFIGURED");
     }
     const event = stripe.webhooks.constructEvent(rawBody, signature, secret);
+    const ignored: WebhookResult = { update: null, payment: null };
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
       const subscriptionId =
         typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
-      if (!subscriptionId) return null;
       const userId = session.client_reference_id || session.metadata?.userId || null;
-      return fromSubscription(stripe, subscriptionId, userId);
+      const update = subscriptionId ? await fromSubscription(stripe, subscriptionId, userId) : null;
+      return {
+        update,
+        payment: paymentFrom(event.id, event.type, userId ?? update?.userId ?? null, session.amount_total, session.currency, session.payment_status || "paid"),
+      };
     }
 
     if (
@@ -98,35 +110,70 @@ export const stripeProvider: PaymentProvider = {
       event.type === "customer.subscription.deleted"
     ) {
       const subscription = event.data.object;
+      const canceled = event.type === "customer.subscription.deleted";
       return {
-        userId: subscription.metadata.userId || null,
-        status: event.type === "customer.subscription.deleted" ? "canceled" : mapStatus(subscription.status),
-        provider: "stripe",
-        providerCustomerId: customerIdOf(subscription.customer),
-        providerSubscriptionId: subscription.id,
-        currentPeriodEnd: periodEnd(subscription),
+        update: {
+          userId: subscription.metadata.userId || null,
+          status: canceled ? "canceled" : mapStatus(subscription.status),
+          provider: "stripe",
+          providerCustomerId: customerIdOf(subscription.customer),
+          providerSubscriptionId: subscription.id,
+          currentPeriodEnd: periodEnd(subscription),
+        },
+        payment: canceled
+          ? paymentFrom(event.id, event.type, subscription.metadata.userId || null, null, null, "canceled")
+          : null,
       };
     }
 
-    if (event.type === "invoice.payment_failed") {
+    if (event.type === "invoice.paid" || event.type === "invoice.payment_failed") {
       const invoice = event.data.object;
       const details = invoice.parent?.subscription_details?.subscription;
       const subscriptionId = typeof details === "string" ? details : details?.id ?? null;
       const customer = customerIdOf(invoice.customer);
-      if (subscriptionId) {
-        const update = await fromSubscription(stripe, subscriptionId, null);
-        return { ...update, status: "past_due" as const, providerCustomerId: update.providerCustomerId ?? customer };
-      }
+      const failed = event.type === "invoice.payment_failed";
+      const update = subscriptionId ? await fromSubscription(stripe, subscriptionId, null) : null;
+      const status = failed ? "past_due" as const : "active" as const;
       return {
-        userId: null,
-        status: "past_due",
-        provider: "stripe",
-        providerCustomerId: customer,
-        providerSubscriptionId: null,
-        currentPeriodEnd: null,
+        update: update
+          ? { ...update, status, providerCustomerId: update.providerCustomerId ?? customer }
+          : {
+              userId: null,
+              status,
+              provider: "stripe",
+              providerCustomerId: customer,
+              providerSubscriptionId: subscriptionId,
+              currentPeriodEnd: null,
+            },
+        payment: paymentFrom(
+          event.id,
+          event.type,
+          update?.userId ?? null,
+          failed ? invoice.amount_due : invoice.amount_paid,
+          invoice.currency,
+          failed ? "failed" : "paid",
+        ),
       };
     }
 
-    return null;
+    return ignored;
   },
 };
+
+function paymentFrom(
+  providerEventId: string,
+  eventType: string,
+  userId: string | null,
+  amountCents: number | null | undefined,
+  currency: string | null | undefined,
+  status: string,
+): PaymentRecord {
+  return {
+    userId,
+    providerEventId,
+    eventType,
+    amountCents: typeof amountCents === "number" ? amountCents : null,
+    currency: currency ?? null,
+    status,
+  };
+}

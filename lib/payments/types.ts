@@ -12,6 +12,22 @@ export type CheckoutInput = {
   customerId: string | null;
   successUrl: string;
   cancelUrl: string;
+  /** Monthly price in the smallest currency unit, already discounted. */
+  amountCents: number;
+};
+
+export type PaymentRecord = {
+  userId: string | null;
+  providerEventId: string;
+  eventType: string;
+  amountCents: number | null;
+  currency: string | null;
+  status: string;
+};
+
+export type WebhookResult = {
+  update: SubscriptionUpdate | null;
+  payment: PaymentRecord | null;
 };
 
 export type PortalInput = {
@@ -32,6 +48,6 @@ export interface PaymentProvider {
   readonly name: string;
   createCheckout(input: CheckoutInput): Promise<{ url: string }>;
   createPortal(input: PortalInput): Promise<{ url: string }>;
-  /** Return null when the event should be ignored. */
-  handleWebhook(rawBody: string, signature: string | null): Promise<SubscriptionUpdate | null>;
+  /** update is null when the event should not change a membership. */
+  handleWebhook(rawBody: string, signature: string | null): Promise<WebhookResult>;
 }
