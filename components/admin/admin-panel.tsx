@@ -21,6 +21,7 @@ type Student = {
   username: string | null;
   name: string | null;
   avatar: string | null;
+  role: string;
   status: string;
   provider: string | null;
   currentPeriodEnd: string | null;
@@ -60,6 +61,7 @@ export function AdminPanel() {
   const [profileFor, setProfileFor] = useState<Student | null>(null);
   const [profileName, setProfileName] = useState("");
   const [profileAvatar, setProfileAvatar] = useState("");
+  const [profileRole, setProfileRole] = useState("student");
   const [profileError, setProfileError] = useState("");
   const [profilePending, setProfilePending] = useState(false);
 
@@ -319,6 +321,7 @@ export function AdminPanel() {
                           setProfileError("");
                           setProfileName(student.name ?? "");
                           setProfileAvatar(student.avatar ?? "");
+                          setProfileRole(student.role || "student");
                           setProfileFor(student);
                         }}
                       >
@@ -386,7 +389,7 @@ export function AdminPanel() {
               const response = await fetch("/api/admin/students/profile", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: profileFor.id, name: profileName, avatarUrl: profileAvatar }),
+                body: JSON.stringify({ userId: profileFor.id, name: profileName, avatarUrl: profileAvatar, role: profileRole }),
               });
               const data = (await response.json().catch(() => ({}))) as ApiError;
               setProfilePending(false);
@@ -406,6 +409,18 @@ export function AdminPanel() {
               <span dir="ltr" className="text-sm text-muted">{identityOf(profileFor)}</span>
             </div>
           ) : null}
+          <label className="block text-sm">
+            <span className="mb-1 block text-muted">{t.admin.role}</span>
+            <select
+              value={profileRole}
+              onChange={(event) => setProfileRole(event.target.value)}
+              className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm"
+            >
+              <option value="student">{t.admin.roleStudent}</option>
+              <option value="instructor">{t.admin.roleInstructor}</option>
+              <option value="admin">{t.admin.roleAdmin}</option>
+            </select>
+          </label>
           <label className="block text-sm">
             <span className="mb-1 block text-muted">{t.account.profileName}</span>
             <Input value={profileName} onChange={(event) => setProfileName(event.target.value)} maxLength={80} />

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { requireAdminCaller } from "@/lib/admin-auth";
+import { requireCourseEditor } from "@/lib/admin-auth";
 import { cleanCourseContent, type CourseRecord, type LessonRecord } from "@/lib/courses";
 import { isMissingRelation } from "@/lib/db-errors";
 import { jsonError } from "@/lib/http";
@@ -68,7 +68,7 @@ function mapCourse(row: CourseRow): CourseRecord {
   };
 }
 
-async function loadCourses(admin: NonNullable<Awaited<ReturnType<typeof requireAdminCaller>>["admin"]>) {
+async function loadCourses(admin: NonNullable<Awaited<ReturnType<typeof requireCourseEditor>>["admin"]>) {
   const { data, error } = await admin
     .from("courses")
     .select("id, title, description, video_url, position, published, created_at, lessons(id, course_id, title, description, video_url, position, published)")
@@ -80,7 +80,7 @@ async function loadCourses(admin: NonNullable<Awaited<ReturnType<typeof requireA
 }
 
 export async function GET() {
-  const gate = await requireAdminCaller();
+  const gate = await requireCourseEditor();
   if (gate.denied) return gate.denied;
   if (!gate.admin) return Response.json({ configured: false, ready: false, courses: [] });
   const loaded = await loadCourses(gate.admin);
@@ -92,7 +92,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const gate = await requireAdminCaller();
+  const gate = await requireCourseEditor();
   if (gate.denied) return gate.denied;
   if (!gate.admin) return jsonError(503, "config");
   const admin = gate.admin;

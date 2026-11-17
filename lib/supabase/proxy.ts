@@ -50,10 +50,17 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (pathname.startsWith("/admin") && !demo) {
-    if (!user || !isAdminEmail(user.email)) {
+    let role = isAdminEmail(user?.email) ? "admin" : "student";
+    if (user && role !== "admin") {
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+      if (profile?.role === "admin" || profile?.role === "instructor") role = profile.role;
+    }
+    const allowed = role === "admin" || (role === "instructor" && pathname.startsWith("/admin/courses"));
+    if (!user || !allowed) {
       const url = request.nextUrl.clone();
-      url.pathname = "/";
+      url.pathname = role === "instructor" ? "/admin/courses" : "/";
       url.search = "";
+      if (role === "instructor" && pathname.startsWith("/admin/courses")) return response;
       return NextResponse.redirect(url);
     }
   }

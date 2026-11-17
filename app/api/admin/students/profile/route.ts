@@ -7,6 +7,7 @@ const bodySchema = z.object({
   userId: z.uuid(),
   name: z.string(),
   avatarUrl: z.string(),
+  role: z.enum(["student", "instructor", "admin"]).optional(),
 });
 
 export async function POST(request: Request) {
@@ -34,5 +35,10 @@ export async function POST(request: Request) {
   }
   if (updated.error) return jsonError(500, "failed");
   await gate.admin.auth.admin.updateUserById(parsed.data.userId, { user_metadata: { full_name: name } }).catch(() => undefined);
+  if (parsed.data.role) {
+    const roleUpdate = await gate.admin.from("profiles").update({ role: parsed.data.role }).eq("id", parsed.data.userId);
+    if (roleUpdate.error && /role/.test(roleUpdate.error.message)) return jsonError(503, "config");
+    if (roleUpdate.error) return jsonError(500, "failed");
+  }
   return Response.json({ ok: true, avatarSaved: true });
 }

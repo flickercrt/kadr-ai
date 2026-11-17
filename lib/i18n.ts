@@ -182,6 +182,10 @@ const ar = {
     passwordHint: "ستة أحرف على الأقل.",
     editProfile: "الملف",
     editProfileTitle: "اسم الطالب وصورته",
+    role: "الدور",
+    roleStudent: "طالب",
+    roleInstructor: "مدرّس",
+    roleAdmin: "مشرف",
   },
   catalog: {
     members: "العضويات",
@@ -460,6 +464,10 @@ const en: typeof ar = {
     passwordHint: "At least six characters.",
     editProfile: "Profile",
     editProfileTitle: "Student name and photo",
+    role: "Role",
+    roleStudent: "Student",
+    roleInstructor: "Instructor",
+    roleAdmin: "Admin",
   },
   catalog: {
     members: "Memberships",
