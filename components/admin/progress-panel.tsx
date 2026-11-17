@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useI18n } from "@/components/locale-provider";
+import { Button } from "@/components/ui/button";
 import { isDemoMode } from "@/lib/env";
 import type { Locale } from "@/lib/i18n";
 
@@ -58,10 +59,12 @@ export function ProgressPanel() {
   const rows = students.flatMap((student) => {
     const label = student.name || student.username || student.email || "—";
     if (student.courses.length === 0) {
-      return [{ key: student.id, student: label, course: "—", done: 0, total: 0, percent: 0 }];
+      return [{ key: student.id, userId: student.id, courseId: "", student: label, course: "—", done: 0, total: 0, percent: 0 }];
     }
     return student.courses.map((course) => ({
       key: `${student.id}-${course.id}`,
+      userId: student.id,
+      courseId: course.id,
       student: label,
       course: course.title,
       done: course.done,
@@ -85,6 +88,7 @@ export function ProgressPanel() {
               <th className="p-3 text-start font-medium">{t.progress.course}</th>
               <th className="p-3 text-start font-medium">{t.progress.lessons}</th>
               <th className="p-3 text-start font-medium">{t.progress.percent}</th>
+              <th className="p-3 text-start font-medium">{t.inbox.certificate}</th>
             </tr>
           </thead>
           <tbody>
@@ -100,6 +104,26 @@ export function ProgressPanel() {
                     </span>
                     <span>{row.percent}%</span>
                   </div>
+                </td>
+                <td className="p-3">
+                  {row.percent === 100 && row.courseId ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        void fetch("/api/admin/certificates", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ userId: row.userId, courseId: row.courseId }),
+                        }).then(async (response) => {
+                          const data = (await response.json().catch(() => ({}))) as { id?: string };
+                          if (response.ok && data.id) window.location.href = `/certificates/${data.id}`;
+                        });
+                      }}
+                    >
+                      {t.inbox.issue}
+                    </Button>
+                  ) : null}
                 </td>
               </tr>
             ))}

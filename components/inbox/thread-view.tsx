@@ -43,8 +43,14 @@ export function ThreadView({ threadId }: { threadId: string }) {
             message.kind === "certificate" ? (
               <article key={message.id} className="rounded-lg border border-[#FF6B4A]/50 bg-surface p-5">
                 <p className="text-xs font-semibold text-[#FF6B4A]">{t.inbox.certificate}</p>
-                <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-7">{message.body}</pre>
-                <button type="button" className="mt-3 text-sm text-primary" onClick={() => window.print()}>{t.inbox.print}</button>
+                <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-7">{message.body.replace(/\/certificates\/[0-9a-f-]{36}/i, "").trim()}</pre>
+                {message.body.match(/\/certificates\/[0-9a-f-]{36}/i) ? (
+                  <Link href={message.body.match(/\/certificates\/[0-9a-f-]{36}/i)?.[0] ?? "/messages"} className="mt-3 inline-block text-sm text-primary">
+                    {t.inbox.download}
+                  </Link>
+                ) : (
+                  <button type="button" className="mt-3 text-sm text-primary" onClick={() => window.print()}>{t.inbox.print}</button>
+                )}
               </article>
             ) : (
               <article key={message.id} className="rounded-lg border border-border bg-surface p-4">

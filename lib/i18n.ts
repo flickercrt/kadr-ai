@@ -279,6 +279,11 @@ const ar = {
     certificate: "شهادة إتمام",
     back: "كل الرسائل",
     print: "طباعة",
+    download: "تنزيل PDF",
+    awardedTo: "تُمنح هذه الشهادة إلى",
+    forCourse: "لإتمام الدورة",
+    issue: "إصدار شهادة",
+    issued: "أُرسلت الشهادة في الرسائل",
     ready: "شهادتك في الرسائل",
   },
   notFound: {
@@ -570,6 +575,11 @@ const en: typeof ar = {
     certificate: "Certificate",
     back: "All messages",
     print: "Print",
+    download: "Download PDF",
+    awardedTo: "This certificate is awarded to",
+    forCourse: "for completing",
+    issue: "Issue certificate",
+    issued: "The certificate was sent to messages",
     ready: "Your certificate is in messages",
   },
   notFound: {

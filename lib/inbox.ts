@@ -37,55 +37,60 @@ export async function postInboxMessage(
   return null;
 }
 
-/** Issue a certificate message for every fully completed published course. Missing tables are ignored. */
-export async function issueReadyCertificates(admin: Admin, userId: string) {
-  const { data: profile, error: profileError } = await admin.from("profiles").select("full_name").eq("id", userId).maybeSingle();
-  if (profileError) return;
-  const { data: courses, error: courseError } = await admin
-    .from("courses")
-    .select("id, title, lessons(id, published)")
-    .eq("published", true);
-  if (courseError) return;
-  const { data: progress, error: progressError } = await admin.from("lesson_progress").select("lesson_id").eq("user_id", userId);
-  if (progressError) return;
-  const done = new Set((progress ?? []).map((row) => row.lesson_id as string));
-  const name = profile?.full_name || "";
+type IssueResult = { id: string } | { error: "incomplete" | "missing" | "failed" };
 
-  for (const course of courses ?? []) {
-    const lessons = ((course.lessons ?? []) as { id: string; published: boolean }[]).filter((lesson) => lesson.published);
-    if (lessons.length === 0 || lessons.some((lesson) => !done.has(lesson.id))) continue;
-    const { data: existing, error: existingError } = await admin
-      .from("certificates")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("course_id", course.id)
-      .maybeSingle();
-    if (existingError) {
-      if (isMissingRelation(existingError)) return;
-      continue;
-    }
-    if (existing) continue;
-    const issuedAt = new Date().toISOString();
-    const { error: insertError } = await admin.from("certificates").insert({
-      user_id: userId,
-      course_id: course.id,
-      student_name: name,
-      course_title: course.title,
-      issued_at: issuedAt,
-    });
-    if (insertError) {
-      if (isMissingRelation(insertError)) return;
-      continue;
-    }
-    const threadId = await ensureThread(admin, userId, "شهادات");
-    if (!threadId) continue;
-    const date = issuedAt.slice(0, 10);
+export async function issueCourseCertificate(admin: Admin, userId: string, courseId: string): Promise<IssueResult> {
+  const { data: profile, error: profileError } = await admin.from("profiles").select("full_name").eq("id", userId).maybeSingle();
+  if (profileError || !profile) return { error: "failed" };
+  const { data: course, error: courseError } = await admin
+    .from("courses")
+    .select("id, title, published, lessons(id, published)")
+    .eq("id", courseId)
+    .maybeSingle();
+  if (courseError) return { error: isMissingRelation(courseError) ? "missing" : "failed" };
+  if (!course?.published) return { error: "incomplete" };
+  const lessons = ((course.lessons ?? []) as { id: string; published: boolean }[]).filter((lesson) => lesson.published);
+  const { data: progress, error: progressError } = await admin.from("lesson_progress").select("lesson_id").eq("user_id", userId);
+  if (progressError) return { error: isMissingRelation(progressError) ? "missing" : "failed" };
+  const done = new Set((progress ?? []).map((row) => row.lesson_id as string));
+  if (lessons.length === 0 || lessons.some((lesson) => !done.has(lesson.id))) return { error: "incomplete" };
+
+  const { data: existing, error: existingError } = await admin
+    .from("certificates")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("course_id", courseId)
+    .maybeSingle();
+  if (existingError) return { error: isMissingRelation(existingError) ? "missing" : "failed" };
+  if (existing?.id) return { id: existing.id as string };
+
+  const issuedAt = new Date().toISOString();
+  const name = profile.full_name || "طالب كادر";
+  const { data: created, error: insertError } = await admin
+    .from("certificates")
+    .insert({ user_id: userId, course_id: courseId, student_name: name, course_title: course.title, issued_at: issuedAt })
+    .select("id")
+    .single();
+  if (insertError || !created) return { error: isMissingRelation(insertError) ? "missing" : "failed" };
+  const threadId = await ensureThread(admin, userId, "شهادات");
+  if (threadId) {
     await postInboxMessage(admin, {
       threadId,
       senderId: null,
       senderRole: "system",
       kind: "certificate",
-      body: `شهادة إتمام\nالاسم: ${name || "طالب كادر"}\nالدورة: ${course.title}\nالتاريخ: ${date}`,
+      body: `شهادة إتمام\nالاسم: ${name}\nالدورة: ${course.title}\nالتاريخ: ${issuedAt.slice(0, 10)}\n/certificates/${created.id}`,
     });
+  }
+  return { id: created.id as string };
+}
+
+/** Issue a certificate message for every fully completed published course. Missing tables are ignored. */
+export async function issueReadyCertificates(admin: Admin, userId: string) {
+  const { data: courses, error } = await admin.from("courses").select("id").eq("published", true);
+  if (error || !courses) return;
+  for (const course of courses) {
+    const result = await issueCourseCertificate(admin, userId, course.id as string);
+    if ("error" in result && result.error === "missing") return;
   }
 }
