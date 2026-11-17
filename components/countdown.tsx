@@ -17,7 +17,7 @@ function parts(target: string, now: number) {
   };
 }
 
-export function useCountdown() {
+export function useCountdown(target: string | null) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     const tick = () => setNow(Date.now());
@@ -28,17 +28,27 @@ export function useCountdown() {
       window.clearInterval(id);
     };
   }, []);
-  if (now === null) return null;
-  return parts(offer.countdownEndsAt, now);
+  if (!target || now === null) return null;
+  return parts(target, now);
 }
 
 function pad(value: number) {
   return String(value).padStart(2, "0");
 }
 
-export function Countdown({ compact = false, onCoral = false }: { compact?: boolean; onCoral?: boolean }) {
+export function Countdown({
+  endsAt,
+  compact = false,
+  onCoral = false,
+}: {
+  endsAt?: string | null;
+  compact?: boolean;
+  onCoral?: boolean;
+}) {
   const { t } = useI18n();
-  const left = useCountdown();
+  const target = endsAt === undefined ? offer.countdownEndsAt : endsAt;
+  const left = useCountdown(target);
+  if (!target) return null;
   if (!left) {
     return <div className={compact ? "h-6 w-28" : "h-16"} aria-hidden />;
   }

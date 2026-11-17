@@ -5,6 +5,8 @@ import { bots } from "@/config/bots";
 import { landing, offer, testimonials } from "@/config/site";
 import { works } from "@/data/works";
 import { Countdown } from "@/components/countdown";
+import { PriceOffer } from "@/components/price-offer";
+import { usePricing } from "@/components/use-pricing";
 import { FrameArt } from "@/components/frame-art";
 import { Mark } from "@/components/logo";
 import { useI18n } from "@/components/locale-provider";
@@ -13,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 export function HomePage() {
   const { t, tx } = useI18n();
+  const pricing = usePricing();
   return (
     <>
       <section className="mx-auto grid max-w-6xl min-w-0 items-center gap-12 px-4 py-14 md:grid-cols-2 md:py-20">
@@ -24,24 +27,17 @@ export function HomePage() {
             {tx(landing.hero.title)}
           </h1>
           <p className="mt-5 max-w-xl text-lg leading-8 text-muted">{tx(landing.hero.subtitle)}</p>
-          <div className="mt-6 flex flex-wrap items-end gap-3">
-            <span className="text-lg text-muted line-through">
-              {offer.currencySymbol}
-              {offer.compareAt}
-            </span>
-            <span className="text-4xl font-semibold text-primary">
-              {offer.currencySymbol}
-              {offer.price}
-            </span>
-            <span className="pb-1 text-sm text-muted">{t.common.perMonth}</span>
-            <span className="rounded-full bg-secondary px-2 py-1 text-xs font-semibold text-white">
-              -{offer.discountPercent}%
-            </span>
+          <div className="mt-6">
+            <PriceOffer pricing={pricing} large />
           </div>
-          <p className="mt-3 text-sm text-muted">{t.countdown.endsIn}</p>
-          <div className="mt-2">
-            <Countdown />
-          </div>
+          {pricing.discountActive && pricing.countdownEndsAt ? (
+            <>
+              <p className="mt-3 text-sm text-muted">{t.countdown.endsIn}</p>
+              <div className="mt-2">
+                <Countdown endsAt={pricing.countdownEndsAt} />
+              </div>
+            </>
+          ) : null}
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/signup?next=/account" className={buttonVariants({ size: "lg" })}>
               {tx(landing.hero.primaryCta)}
@@ -202,16 +198,8 @@ export function HomePage() {
               ) : null}
               <h3 className="mt-3 text-2xl font-semibold">{tx(plan.title)}</h3>
               {plan.highlighted ? (
-                <div className="mt-4 flex items-end gap-2">
-                  <span className="text-muted line-through">
-                    {offer.currencySymbol}
-                    {offer.compareAt}
-                  </span>
-                  <span className="text-4xl font-semibold text-primary">
-                    {offer.currencySymbol}
-                    {offer.price}
-                  </span>
-                  <span className="pb-1 text-sm text-muted">{t.common.perMonth}</span>
+                <div className="mt-4">
+                  <PriceOffer pricing={pricing} large />
                 </div>
               ) : (
                 <p className="mt-4 text-sm text-muted">{tx(plan.priceNote)}</p>

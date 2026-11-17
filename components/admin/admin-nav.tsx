@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/admin", id: "members" },
   { href: "/admin/courses", id: "courses" },
+  { href: "/admin/pricing", id: "pricing" },
 ] as const;
 
 export function AdminNav({ current }: { current: (typeof links)[number]["id"] }) {
@@ -14,6 +15,7 @@ export function AdminNav({ current }: { current: (typeof links)[number]["id"] })
   const label = {
     members: t.catalog.members,
     courses: t.catalog.nav,
+    pricing: t.pricing.nav,
   };
   return (
     <nav className="mb-6 flex flex-wrap gap-2">

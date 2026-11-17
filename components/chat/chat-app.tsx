@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { BotConfig } from "@/config/bots";
 import { offer, whatsappHref } from "@/config/site";
+import { PriceOffer } from "@/components/price-offer";
+import { usePricing } from "@/components/use-pricing";
 import { buildDemoReply } from "@/lib/demo-reply";
 import type { MeResponse, MessageRecord, SessionRecord } from "@/lib/types";
 import { AppHeader } from "@/components/app-header";
@@ -437,6 +439,7 @@ export function ChatApp({ bot }: { bot: BotConfig }) {
 
 function Paywall({ me }: { me: MeResponse | null }) {
   const { t, locale } = useI18n();
+  const pricing = usePricing();
   const router = useRouter();
   const [error, setError] = useState("");
 
@@ -458,15 +461,9 @@ function Paywall({ me }: { me: MeResponse | null }) {
     <div className="mx-auto max-w-xl rounded-lg border border-border bg-surface p-5">
       <h2 className="text-xl font-semibold">{t.chat.paywallTitle}</h2>
       <p className="mt-2 text-sm leading-7 text-muted">{t.chat.paywallBody}</p>
-      <p className="mt-3 text-2xl font-semibold text-primary">
-        <span className="me-2 text-base text-muted line-through">
-          {offer.currencySymbol}
-          {offer.compareAt}
-        </span>
-        {offer.currencySymbol}
-        {offer.price}
-        <span className="text-sm text-muted">{t.common.perMonth}</span>
-      </p>
+      <div className="mt-3">
+        <PriceOffer pricing={pricing} />
+      </div>
       {error ? <p className="mt-2 text-sm text-secondary">{error}</p> : null}
       <div className="mt-4 flex flex-wrap gap-2">
         <Button type="button" onClick={() => void checkout()}>

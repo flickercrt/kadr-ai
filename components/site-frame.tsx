@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { joinFeed, landing, offer, whatsappHref } from "@/config/site";
 import { Countdown } from "@/components/countdown";
+import { usePricing } from "@/components/use-pricing";
+import { promoText } from "@/lib/pricing";
 import { Logo } from "@/components/logo";
 import { useI18n } from "@/components/locale-provider";
 import { buttonVariants } from "@/components/ui/button";
@@ -38,14 +40,19 @@ export function SiteFrame({
 }
 
 function PromoBar() {
-  const { tx, t } = useI18n();
+  const { tx, t, locale } = useI18n();
+  const pricing = usePricing();
   return (
     <div className="bg-secondary text-white">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm">
-        <p className="font-medium">{tx(landing.promo.text)}</p>
+        <p className="font-medium">{promoText(pricing, locale)}</p>
         <div className="flex items-center gap-3">
-          <span className="hidden sm:inline text-white/80">{t.countdown.endsIn}</span>
-          <Countdown compact onCoral />
+          {pricing.discountActive && pricing.countdownEndsAt ? (
+            <>
+              <span className="hidden sm:inline text-white/80">{t.countdown.endsIn}</span>
+              <Countdown endsAt={pricing.countdownEndsAt} compact onCoral />
+            </>
+          ) : null}
           <Link href="/signup?next=/account" className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
             {tx(landing.promo.cta)}
           </Link>

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { offer, whatsappHref } from "@/config/site";
+import { PriceOffer } from "@/components/price-offer";
+import { usePricing } from "@/components/use-pricing";
 import { AppHeader } from "@/components/app-header";
 import { useI18n } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
@@ -10,6 +12,7 @@ import { useMe } from "@/components/use-me";
 
 export function AccountPanel() {
   const { t, locale } = useI18n();
+  const pricing = usePricing();
   const { me, failed } = useMe();
   const [banner, setBanner] = useState<"success" | "cancel" | null>(null);
   const [error, setError] = useState("");
@@ -90,15 +93,9 @@ export function AccountPanel() {
                 ? new Date(me.subscription.currentPeriodEnd).toLocaleDateString(locale === "ar" ? "ar" : "en")
                 : t.account.openEnded}
             </p>
-            <p className="mt-4 text-3xl font-semibold text-primary">
-              <span className="me-2 text-base text-muted line-through">
-                {offer.currencySymbol}
-                {offer.compareAt}
-              </span>
-              {offer.currencySymbol}
-              {offer.price}
-              <span className="text-sm text-muted">{t.common.perMonth}</span>
-            </p>
+            <div className="mt-4">
+              <PriceOffer pricing={pricing} />
+            </div>
             {error ? <p className="mt-3 text-sm text-secondary">{error}</p> : null}
             <div className="mt-5 flex flex-wrap gap-2">
               <Button type="button" onClick={() => void checkout()} disabled={pending !== null}>
