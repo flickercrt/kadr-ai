@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
+import { FavoriteButton } from "@/components/favorite-button";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/components/locale-provider";
 import { useMe } from "@/components/use-me";
@@ -17,6 +18,8 @@ export function CourseView({ courseId }: { courseId: string }) {
   const [active, setActive] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
+  const [favoriteCourses, setFavoriteCourses] = useState<Set<string>>(new Set());
+  const [favoriteLessons, setFavoriteLessons] = useState<Set<string>>(new Set());
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -43,6 +46,20 @@ export function CourseView({ courseId }: { courseId: string }) {
     }, 0);
     return () => window.clearTimeout(id);
   }, [courseId]);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      void fetch("/api/favorites")
+        .then(async (response) => {
+          if (!response.ok) return;
+          const data = (await response.json()) as { ids?: { course?: string[]; lesson?: string[] } };
+          setFavoriteCourses(new Set(data.ids?.course ?? []));
+          setFavoriteLessons(new Set(data.ids?.lesson ?? []));
+        })
+        .catch(() => undefined);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, []);
 
   const selected: LessonRecord | null = course?.lessons.find((lesson) => lesson.id === selectedId) ?? course?.lessons[0] ?? null;
   const embed = selected ? youtubeEmbedUrl(selected.videoUrl) : null;
@@ -77,7 +94,10 @@ export function CourseView({ courseId }: { courseId: string }) {
         ) : null}
         {course && active ? (
           <>
-            <h1 className="mt-4 text-3xl font-semibold">{course.title}</h1>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <h1 className="text-3xl font-semibold">{course.title}</h1>
+              <FavoriteButton targetType="course" targetId={course.id} active={favoriteCourses.has(course.id)} label={t.favorites.save} />
+            </div>
             {course.description ? <p className="mt-2 max-w-3xl text-sm leading-7 text-muted">{course.description}</p> : null}
             {course.lessons.length > 0 && course.lessons.every((lesson) => completed.has(lesson.id)) ? (
               <p className="mt-3 text-sm text-primary">
@@ -116,7 +136,10 @@ export function CourseView({ courseId }: { courseId: string }) {
               <article className="rounded-lg border border-border bg-surface p-4">
                 {selected ? (
                   <>
-                    <h2 className="text-2xl font-semibold">{selected.title}</h2>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h2 className="text-2xl font-semibold">{selected.title}</h2>
+                      <FavoriteButton targetType="lesson" targetId={selected.id} active={favoriteLessons.has(selected.id)} label={t.favorites.save} />
+                    </div>
                     {selected.description ? <p className="mt-2 text-sm leading-7 text-muted">{selected.description}</p> : null}
                     <div className="mt-3">
                       {completed.has(selected.id) ? (

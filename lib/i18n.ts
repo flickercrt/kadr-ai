@@ -286,6 +286,16 @@ const ar = {
     completed: "مكتمل",
     mark: "تعليم كمكتمل",
   },
+  favorites: {
+    title: "المفضلة",
+    lead: "الدورات والدروس ومحادثات البوتات التي حفظتها.",
+    courses: "الدورات",
+    lessons: "الدروس",
+    sessions: "محادثات البوتات",
+    empty: "لم تحفظ شيئاً بعد.",
+    save: "حفظ",
+    schema: "نفّذ الملف supabase/migrations/20261117250000_favorites.sql في محرر SQL لتفعيل المفضلة.",
+  },
   chatThread: {
     nav: "المحادثات",
     title: "محادثة مع الإدارة",
@@ -647,6 +657,16 @@ const en: typeof ar = {
     percent: "Percent",
     completed: "Complete",
     mark: "Mark complete",
+  },
+  favorites: {
+    title: "Favorites",
+    lead: "Courses, lessons, and bot chats you saved.",
+    courses: "Courses",
+    lessons: "Lessons",
+    sessions: "Bot chats",
+    empty: "Nothing saved yet.",
+    save: "Save",
+    schema: "Run supabase/migrations/20261117250000_favorites.sql in the SQL editor to turn on favorites.",
   },
   chatThread: {
     nav: "Chats",

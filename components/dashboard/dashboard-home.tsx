@@ -21,7 +21,10 @@ export function DashboardHome() {
     <div className="min-h-dvh">
       <AppHeader me={me} />
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <h1 className="text-3xl font-semibold">{t.dash.title}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-3xl font-semibold">{t.dash.title}</h1>
+          <Link href="/dashboard/favorites" className="text-sm text-primary">{t.favorites.title}</Link>
+        </div>
         <p className="mt-2 max-w-2xl text-muted">{t.dash.lead}</p>
         <RenewalBanner />
         {failed ? <p className="mt-4 text-sm text-secondary">{t.common.error}</p> : null}

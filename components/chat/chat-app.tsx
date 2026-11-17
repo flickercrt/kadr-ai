@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { BotConfig } from "@/config/bots";
 import { offer, whatsappHref } from "@/config/site";
+import { FavoriteButton } from "@/components/favorite-button";
 import { PriceOffer } from "@/components/price-offer";
 import { usePricing } from "@/components/use-pricing";
 import { buildDemoReply } from "@/lib/demo-reply";
@@ -312,17 +313,18 @@ export function ChatApp({ bot }: { bot: BotConfig }) {
           </div>
           <ul className="max-h-[calc(100dvh-8rem)] space-y-1 overflow-auto px-2 pb-4">
             {sessions.map((session) => (
-              <li key={session.id}>
+              <li key={session.id} className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => void openSession(session.id)}
                   className={cn(
-                    "w-full rounded-lg px-3 py-2 text-start text-sm",
+                    "min-w-0 flex-1 rounded-lg px-3 py-2 text-start text-sm",
                     session.id === activeId ? "bg-primary/15 text-foreground" : "text-muted hover:bg-white/5",
                   )}
                 >
                   {session.title}
                 </button>
+                <FavoriteButton targetType="session" targetId={session.id} label={t.favorites.save} />
               </li>
             ))}
           </ul>
