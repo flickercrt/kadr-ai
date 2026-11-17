@@ -8,7 +8,7 @@ import { SignupNotices } from "@/components/admin/signup-notices";
 import { StatsStrip } from "@/components/admin/stats-strip";
 import { AppHeader } from "@/components/app-header";
 import { useI18n } from "@/components/locale-provider";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Modal } from "@/components/ui/modal";
@@ -239,7 +239,7 @@ export function AdminPanel() {
               ))}
             </select>
           </div>
-          <a href="/api/admin/export" className="inline-flex h-11 items-center rounded-lg border border-border px-4 text-sm font-semibold">
+          <a href="/api/admin/export" className={buttonVariants({ variant: "outline" })}>
             {t.admin.export}
           </a>
           {configured && !forbidden ? (
