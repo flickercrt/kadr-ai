@@ -30,6 +30,10 @@ const actions = [
   "video.updated",
   "course.updated",
   "maintenance.toggled",
+  "device.revoked",
+  "device.revoked_all",
+  "device.blocked",
+  "device_limit.updated",
 ];
 
 type Entry = {

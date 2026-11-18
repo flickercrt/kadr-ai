@@ -6,10 +6,11 @@ import type { MeResponse } from "@/lib/types";
 export function useMe() {
   const [me, setMe] = useState<MeResponse | null>(null);
   const [failed, setFailed] = useState(false);
+  const [ready, setReady] = useState(false);
 
   const reload = useCallback(async () => {
     try {
-      const response = await fetch("/api/me");
+      const response = await fetch("/api/me", { cache: "no-store" });
       if (!response.ok) {
         setMe(null);
         setFailed(response.status !== 401 && response.status !== 403);
@@ -22,6 +23,8 @@ export function useMe() {
     } catch {
       setFailed(true);
       return null;
+    } finally {
+      setReady(true);
     }
   }, []);
 
@@ -32,5 +35,5 @@ export function useMe() {
     return () => window.clearTimeout(id);
   }, [reload]);
 
-  return { me, failed, reload };
+  return { me, failed, ready, reload };
 }

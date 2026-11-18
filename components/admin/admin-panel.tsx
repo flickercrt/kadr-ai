@@ -436,6 +436,9 @@ export function AdminPanel() {
                         <Link href={`/admin/chat/${student.id}`}>{t.chatThread.open}</Link>
                       </Button>
                       <PaymentHistoryButton userId={student.id} />
+                      <Button size="sm" variant="outline" asChild>
+                        <Link href={`/admin/students/${student.id}`}>{t.devices.student}</Link>
+                      </Button>
                     </div>
                   </td>
                 </tr>

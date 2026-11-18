@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { offer, whatsappHref } from "@/config/site";
+import { MyDevices } from "@/components/account/my-devices";
 import { PriceOffer } from "@/components/price-offer";
 import { RenewalBanner } from "@/components/renewal-banner";
 import { usePricing } from "@/components/use-pricing";
@@ -196,6 +197,7 @@ export function AccountPanel() {
                 {offer.whatsappDisplay}
               </span>
             </a>
+            <MyDevices />
             {me.isAdmin ? (
               <p className="mt-4">
                 <Link href="/admin" className="text-sm text-primary">{t.account.admin}</Link>

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { logActivity } from "@/lib/activity";
-import { isAdminEmail } from "@/lib/env";
+import { REMEMBER_COOKIE } from "@/lib/auth-cookies";
+import { claimDevice } from "@/lib/devices";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/utils";
+import { cookies } from "next/headers";
 
 
 export async function GET(request: Request) {
@@ -15,15 +16,13 @@ export async function GET(request: Request) {
       await supabase.auth.exchangeCodeForSession(code);
       const user = (await supabase.auth.getUser()).data.user;
       if (user) {
-        await logActivity({
-          actorId: user.id,
-          actorEmail: user.email,
-          actorRole: isAdminEmail(user.email) ? "admin" : "student",
-          action: "auth.login",
-          targetType: "user",
-          targetId: user.id,
-          metadata: { via: "oauth" },
-        });
+        const jar = await cookies();
+        const remember = jar.get(REMEMBER_COOKIE)?.value !== "0";
+        const claimed = await claimDevice(request, remember);
+        if (!claimed.ok && claimed.code === "device_limit") {
+          return NextResponse.redirect(new URL("/login?reason=devices", url.origin));
+        }
+        if (claimed.ok && claimed.finish) await claimed.finish();
       }
     }
   }

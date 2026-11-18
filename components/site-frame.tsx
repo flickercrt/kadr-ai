@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { joinFeed, landing, offer, whatsappHref } from "@/config/site";
 import { Countdown } from "@/components/countdown";
 import { usePricing } from "@/components/use-pricing";
 import { promoText } from "@/lib/pricing";
+import { Avatar } from "@/components/avatar";
 import { Logo } from "@/components/logo";
 import { useI18n } from "@/components/locale-provider";
+import { useMe } from "@/components/use-me";
 import { buttonVariants } from "@/components/ui/button";
+import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 
 export function SiteFrame({
@@ -19,6 +22,7 @@ export function SiteFrame({
   children: React.ReactNode;
   showJoinToast?: boolean;
 }) {
+  const session = useMe();
   return (
     <>
       <a
@@ -29,10 +33,10 @@ export function SiteFrame({
       </a>
       <div className="sticky top-0 z-40">
         <PromoBar />
-        <SiteHeader />
+        <SiteHeader session={session} />
       </div>
       <main id="content">{children}</main>
-      <SiteFooter />
+      <SiteFooter session={session} />
       <WhatsAppButton />
       {showJoinToast ? <JoinToast /> : null}
     </>
@@ -62,10 +66,21 @@ function PromoBar() {
   );
 }
 
-function SiteHeader() {
+function SiteHeader({ session }: { session: ReturnType<typeof useMe> }) {
   const { locale, setLocale, t, tx } = useI18n();
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const user = session.ready ? session.me?.user : undefined;
+  const loggedIn = Boolean(user);
+
+  async function logout() {
+    const supabase = createBrowserSupabase();
+    await supabase?.auth.signOut();
+    await session.reload();
+    router.push("/");
+    router.refresh();
+  }
   const links = [
     { href: "/", label: t.nav.home },
     { href: "/#bots", label: t.nav.bots },
@@ -106,12 +121,30 @@ function SiteHeader() {
           >
             {t.lang.short}
           </button>
-          <Link href="/login" className="hidden text-sm text-muted hover:text-foreground sm:inline">
-            {t.nav.login}
-          </Link>
-          <Link href="/signup" className={cn(buttonVariants({ size: "sm" }), "hidden sm:inline-flex")}>
-            {tx(landing.hero.primaryCta)}
-          </Link>
+          {session.ready && loggedIn ? (
+            <>
+              <Link href="/dashboard" className="hidden text-sm text-muted hover:text-foreground sm:inline">
+                {t.nav.dashboard}
+              </Link>
+              <Link href="/account" data-auth="in" className="hidden items-center gap-2 text-sm text-foreground sm:inline-flex">
+                <Avatar name={user?.name || ""} src={user?.avatar} size={28} />
+                {t.nav.account}
+              </Link>
+              <button type="button" onClick={() => void logout()} className="hidden text-sm text-muted hover:text-foreground sm:inline">
+                {t.common.logout}
+              </button>
+            </>
+          ) : null}
+          {session.ready && !loggedIn ? (
+            <>
+              <Link href="/login" data-auth="out" className="hidden text-sm text-muted hover:text-foreground sm:inline">
+                {t.nav.login}
+              </Link>
+              <Link href="/signup" className={cn(buttonVariants({ size: "sm" }), "hidden sm:inline-flex")}>
+                {tx(landing.hero.primaryCta)}
+              </Link>
+            </>
+          ) : null}
           <button
             type="button"
             className="grid h-10 w-10 place-items-center rounded-lg border border-border lg:hidden"
@@ -134,12 +167,18 @@ function SiteHeader() {
                 {link.label}
               </Link>
             ))}
-            <Link href="/login" onClick={() => setOpen(false)}>
-              {t.nav.login}
-            </Link>
-            <Link href="/signup" className={buttonVariants()} onClick={() => setOpen(false)}>
-              {t.nav.start}
-            </Link>
+            {loggedIn ? (
+              <>
+                <Link href="/dashboard" onClick={() => setOpen(false)}>{t.nav.dashboard}</Link>
+                <Link href="/account" onClick={() => setOpen(false)}>{t.nav.account}</Link>
+                <button type="button" className="text-start" onClick={() => void logout()}>{t.common.logout}</button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" onClick={() => setOpen(false)}>{t.nav.login}</Link>
+                <Link href="/signup" className={buttonVariants()} onClick={() => setOpen(false)}>{t.nav.start}</Link>
+              </>
+            )}
           </div>
         </div>
       ) : null}
@@ -147,8 +186,9 @@ function SiteHeader() {
   );
 }
 
-function SiteFooter() {
+function SiteFooter({ session }: { session: ReturnType<typeof useMe> }) {
   const { t, tx, locale } = useI18n();
+  const loggedIn = Boolean(session.ready && session.me?.user);
   const [year, setYear] = useState("2026");
   useEffect(() => {
     const id = window.setTimeout(() => setYear(String(new Date().getFullYear())), 0);
@@ -169,7 +209,7 @@ function SiteFooter() {
             <li><Link href="/roadmap">{t.nav.roadmap}</Link></li>
             <li><Link href="/faq">{t.nav.faq}</Link></li>
             <li><Link href="/contact">{t.nav.contact}</Link></li>
-            <li><Link href="/login">{t.nav.login}</Link></li>
+            <li><Link href={loggedIn ? "/account" : "/login"}>{loggedIn ? t.nav.account : t.nav.login}</Link></li>
           </ul>
         </div>
         <div>

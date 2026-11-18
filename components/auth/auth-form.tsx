@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { followLogin, WHATSAPP_DEVICES, writeRememberCookie } from "@/lib/auth-cookies";
 import { isDemoMode, isSupabaseConfigured } from "@/lib/env";
 import { safeNextPath } from "@/lib/utils";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
@@ -19,8 +20,23 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [pending, setPending] = useState(false);
+  const [remember, setRemember] = useState(true);
+  const [blocked, setBlocked] = useState(false);
   const configured = isSupabaseConfigured();
   const demo = isDemoMode();
+
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get("reason");
+    const id = window.setTimeout(() => {
+      if (reason === "devices") {
+        setBlocked(true);
+        setError(t.devices.limit);
+      } else if (reason === "revoked" || reason === "device") {
+        setInfo(t.devices.signedOut);
+      }
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [t.devices.limit, t.devices.signedOut]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -43,7 +59,9 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       setError(t.auth.usernameInvalid);
       return;
     }
-    const supabase = createBrowserSupabase();
+    const keep = mode === "login" ? remember : true;
+    writeRememberCookie(keep);
+    const supabase = createBrowserSupabase(keep);
     if (!supabase) {
       setError(t.auth.configMissing);
       return;
@@ -68,7 +86,9 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         setInfo(t.auth.checkEmail);
         return;
       }
-      window.location.href = next;
+      const allowed = await claimDevice(remember);
+      if (!allowed) return;
+      followLogin(next);
       return;
     }
     const { error: signError } = await supabase.auth.signInWithPassword({
@@ -80,12 +100,33 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       setError(signError.message);
       return;
     }
-    void fetch("/api/activity/login", { method: "POST" }).catch(() => undefined);
-    window.location.href = next;
+    const allowed = await claimDevice(remember);
+    if (!allowed) return;
+    followLogin(next);
+  }
+
+  async function claimDevice(keep: boolean) {
+    try {
+      const response = await fetch("/api/devices/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ remember: keep }),
+      });
+      const data = (await response.json().catch(() => ({}))) as { code?: string; message?: string };
+      if (response.status === 403 && data.code === "device_limit") {
+        setBlocked(true);
+        setError(data.message || t.devices.limit);
+        return false;
+      }
+    } catch {
+      // A failed device write must not trap a successful login.
+    }
+    return true;
   }
 
   async function google() {
-    const supabase = createBrowserSupabase();
+    writeRememberCookie(true);
+    const supabase = createBrowserSupabase(true);
     if (!supabase) {
       setError(t.auth.configMissing);
       return;
@@ -140,7 +181,23 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             required
           />
         </label>
-        {error ? <p className="text-sm text-secondary">{error}</p> : null}
+        {mode === "login" ? (
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(event) => setRemember(event.target.checked)}
+              className="size-4 accent-[#00D4B4]"
+            />
+            {t.auth.remember}
+          </label>
+        ) : null}
+        {error ? <p className="text-sm text-secondary" role="alert">{error}</p> : null}
+        {blocked ? (
+          <a href={WHATSAPP_DEVICES} className="inline-block text-sm text-primary" target="_blank" rel="noreferrer">
+            {t.devices.whatsapp}
+          </a>
+        ) : null}
         {info ? <p className="text-sm text-primary">{info}</p> : null}
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? t.common.loading : mode === "login" ? t.auth.submitLogin : t.auth.submitSignup}
